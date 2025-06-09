@@ -2,9 +2,11 @@
 import { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { latLngToCell, cellToBoundary } from 'h3-js';
-import { Camera } from 'lucide-react';
+import { Camera, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tree } from '@/types/tree';
+import MapboxSettings from '@/components/settings/MapboxSettings';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
 interface TreeMapProps {
@@ -17,6 +19,8 @@ const TreeMap = ({ trees, onTreeClick, onCameraClick }: TreeMapProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+  const [showSettings, setShowSettings] = useState(false);
+  const [mapboxToken, setMapboxToken] = useState<string | null>(null);
 
   // Category colors for tree markers
   const categoryColors = {
@@ -24,6 +28,12 @@ const TreeMap = ({ trees, onTreeClick, onCameraClick }: TreeMapProps) => {
     community: '#3b82f6', // Blue
     nursery: '#eab308'    // Yellow
   };
+
+  useEffect(() => {
+    // Check for stored Mapbox token
+    const token = localStorage.getItem('mapbox_token');
+    setMapboxToken(token);
+  }, []);
 
   useEffect(() => {
     // Get user location
@@ -45,10 +55,9 @@ const TreeMap = ({ trees, onTreeClick, onCameraClick }: TreeMapProps) => {
   }, []);
 
   useEffect(() => {
-    if (!mapContainer.current || !userLocation) return;
+    if (!mapContainer.current || !userLocation || !mapboxToken) return;
 
-    // TODO: Replace with actual Mapbox token
-    mapboxgl.accessToken = 'your-mapbox-token-here';
+    mapboxgl.accessToken = mapboxToken;
     
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
@@ -71,10 +80,18 @@ const TreeMap = ({ trees, onTreeClick, onCameraClick }: TreeMapProps) => {
     return () => {
       map.current?.remove();
     };
-  }, [userLocation]);
+  }, [userLocation, mapboxToken]);
 
   useEffect(() => {
     if (!map.current) return;
+
+    // Clear existing markers
+    const markers = document.querySelectorAll('.mapboxgl-marker');
+    markers.forEach(marker => {
+      if (!marker.classList.contains('user-location')) {
+        marker.remove();
+      }
+    });
 
     // Add tree markers
     trees.forEach((tree) => {
@@ -100,6 +117,34 @@ const TreeMap = ({ trees, onTreeClick, onCameraClick }: TreeMapProps) => {
     });
   }, [trees, onTreeClick]);
 
+  if (!mapboxToken) {
+    return (
+      <div className="relative w-full h-full flex items-center justify-center bg-gray-100">
+        <div className="text-center space-y-4 p-8">
+          <Settings className="h-16 w-16 text-gray-400 mx-auto" />
+          <div>
+            <h3 className="text-lg font-semibold mb-2">Mapbox Configuration Required</h3>
+            <p className="text-muted-foreground mb-4">
+              To use the map features, please configure your Mapbox access token.
+            </p>
+            <Button onClick={() => setShowSettings(true)}>
+              Configure Mapbox
+            </Button>
+          </div>
+        </div>
+
+        <Dialog open={showSettings} onOpenChange={setShowSettings}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Map Configuration</DialogTitle>
+            </DialogHeader>
+            <MapboxSettings />
+          </DialogContent>
+        </Dialog>
+      </div>
+    );
+  }
+
   return (
     <div className="relative w-full h-full">
       <div ref={mapContainer} className="w-full h-full" />
@@ -112,6 +157,25 @@ const TreeMap = ({ trees, onTreeClick, onCameraClick }: TreeMapProps) => {
       >
         <Camera className="h-6 w-6" />
       </Button>
+
+      {/* Settings FAB */}
+      <Button
+        onClick={() => setShowSettings(true)}
+        size="sm"
+        variant="outline"
+        className="fixed top-20 left-4 z-10 rounded-full w-10 h-10 bg-white shadow-lg"
+      >
+        <Settings className="h-4 w-4" />
+      </Button>
+
+      <Dialog open={showSettings} onOpenChange={setShowSettings}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Map Settings</DialogTitle>
+          </DialogHeader>
+          <MapboxSettings />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
