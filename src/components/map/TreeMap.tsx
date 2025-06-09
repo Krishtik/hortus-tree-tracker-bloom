@@ -4,20 +4,8 @@ import mapboxgl from 'mapbox-gl';
 import { latLngToCell, cellToBoundary } from 'h3-js';
 import { Camera } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Tree } from '@/types/tree';
 import 'mapbox-gl/dist/mapbox-gl.css';
-
-interface Tree {
-  id: string;
-  name: string;
-  scientificName: string;
-  category: 'farm' | 'community' | 'nursery';
-  lat: number;
-  lng: number;
-  h3Index: string;
-  photos: string[];
-  taggedBy: string;
-  taggedAt: Date;
-}
 
 interface TreeMapProps {
   trees: Tree[];
@@ -93,14 +81,14 @@ const TreeMap = ({ trees, onTreeClick, onCameraClick }: TreeMapProps) => {
       const color = categoryColors[tree.category];
       
       const marker = new mapboxgl.Marker({ color })
-        .setLngLat([tree.lng, tree.lat])
+        .setLngLat([tree.location.lng, tree.location.lat])
         .setPopup(
           new mapboxgl.Popup().setHTML(`
             <div class="p-2">
               <h3 class="font-semibold">${tree.name}</h3>
               <p class="text-sm text-gray-600">${tree.scientificName}</p>
               <p class="text-xs text-gray-500">${tree.category} forestry</p>
-              <p class="text-xs text-gray-500">H3: ${tree.h3Index}</p>
+              <p class="text-xs text-gray-500">H3: ${tree.location.h3Index}</p>
             </div>
           `)
         )
