@@ -1,13 +1,12 @@
 
 import { useEffect, useRef, useState } from 'react';
-import mapboxgl from 'mapbox-gl';
-import { latLngToCell, cellToBoundary } from 'h3-js';
+import { Loader } from '@googlemaps/js-api-loader';
+import { latLngToCell } from 'h3-js';
 import { Camera, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tree } from '@/types/tree';
-import MapboxSettings from '@/components/settings/MapboxSettings';
+import GoogleMapsSettings from '@/components/settings/GoogleMapsSettings';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import 'mapbox-gl/dist/mapbox-gl.css';
 
 interface TreeMapProps {
   trees: Tree[];
@@ -16,11 +15,13 @@ interface TreeMapProps {
 }
 
 const TreeMap = ({ trees, onTreeClick, onCameraClick }: TreeMapProps) => {
-  const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<mapboxgl.Map | null>(null);
+  const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<google.maps.Map | null>(null);
+  const markersRef = useRef<google.maps.Marker[]>([]);
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [showSettings, setShowSettings] = useState(false);
-  const [mapboxToken, setMapboxToken] = useState<string | null>(null);
+  const [googleMapsKey, setGoogleMapsKey] = useState<string | null>(null);
+  const [mapLoaded, setMapLoaded] = useState(false);
 
   // Category colors for tree markers
   const categoryColors = {
@@ -30,9 +31,9 @@ const TreeMap = ({ trees, onTreeClick, onCameraClick }: TreeMapProps) => {
   };
 
   useEffect(() => {
-    // Check for stored Mapbox token
-    const token = localStorage.getItem('mapbox_token');
-    setMapboxToken(token);
+    // Check for stored Google Maps API key
+    const apiKey = localStorage.getItem('google_maps_api_key');
+    setGoogleMapsKey(apiKey);
   }, []);
 
   useEffect(() => {
@@ -45,90 +46,118 @@ const TreeMap = ({ trees, onTreeClick, onCameraClick }: TreeMapProps) => {
         },
         (error) => {
           console.error('Error getting location:', error);
-          // Default to a location in India
-          setUserLocation([77.2090, 28.6139]); // New Delhi
+          // Default to New Delhi, India
+          setUserLocation([77.2090, 28.6139]);
         }
       );
     } else {
-      setUserLocation([77.2090, 28.6139]); // New Delhi fallback
+      setUserLocation([77.2090, 28.6139]);
     }
   }, []);
 
   useEffect(() => {
-    if (!mapContainer.current || !userLocation || !mapboxToken) return;
+    if (!mapRef.current || !userLocation || !googleMapsKey || mapLoaded) return;
 
-    mapboxgl.accessToken = mapboxToken;
-    
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/satellite-streets-v12',
-      center: userLocation,
-      zoom: 15,
-      pitch: 0,
-      bearing: 0
+    const loader = new Loader({
+      apiKey: googleMapsKey,
+      version: 'weekly',
+      libraries: ['places']
     });
 
-    // Add navigation controls
-    map.current.addControl(new mapboxgl.NavigationControl(), 'top-left');
+    loader.load().then(() => {
+      if (!mapRef.current) return;
 
-    // Add user location marker
-    new mapboxgl.Marker({ color: '#ef4444' })
-      .setLngLat(userLocation)
-      .setPopup(new mapboxgl.Popup().setHTML('<div>Your Location</div>'))
-      .addTo(map.current);
+      const map = new google.maps.Map(mapRef.current, {
+        center: { lat: userLocation[1], lng: userLocation[0] },
+        zoom: 15,
+        mapTypeId: google.maps.MapTypeId.SATELLITE,
+        mapTypeControl: true,
+        streetViewControl: true,
+        fullscreenControl: true,
+        zoomControl: true,
+      });
 
-    return () => {
-      map.current?.remove();
-    };
-  }, [userLocation, mapboxToken]);
+      mapInstanceRef.current = map;
+
+      // Add user location marker
+      new google.maps.Marker({
+        position: { lat: userLocation[1], lng: userLocation[0] },
+        map: map,
+        title: 'Your Location',
+        icon: {
+          url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="12" cy="12" r="8" fill="#ef4444" stroke="white" stroke-width="2"/>
+            </svg>
+          `),
+          scaledSize: new google.maps.Size(24, 24),
+        }
+      });
+
+      setMapLoaded(true);
+    }).catch((error) => {
+      console.error('Error loading Google Maps:', error);
+    });
+  }, [userLocation, googleMapsKey, mapLoaded]);
 
   useEffect(() => {
-    if (!map.current) return;
+    if (!mapInstanceRef.current || !mapLoaded) return;
 
-    // Clear existing markers
-    const markers = document.querySelectorAll('.mapboxgl-marker');
-    markers.forEach(marker => {
-      if (!marker.classList.contains('user-location')) {
-        marker.remove();
-      }
-    });
+    // Clear existing tree markers
+    markersRef.current.forEach(marker => marker.setMap(null));
+    markersRef.current = [];
 
     // Add tree markers
     trees.forEach((tree) => {
       const color = categoryColors[tree.category];
       
-      const marker = new mapboxgl.Marker({ color })
-        .setLngLat([tree.location.lng, tree.location.lat])
-        .setPopup(
-          new mapboxgl.Popup().setHTML(`
-            <div class="p-2">
-              <h3 class="font-semibold">${tree.name}</h3>
-              <p class="text-sm text-gray-600">${tree.scientificName}</p>
-              <p class="text-xs text-gray-500">${tree.category} forestry</p>
-              <p class="text-xs text-gray-500">H3: ${tree.location.h3Index}</p>
-            </div>
-          `)
-        )
-        .addTo(map.current!);
+      const marker = new google.maps.Marker({
+        position: { lat: tree.location.lat, lng: tree.location.lng },
+        map: mapInstanceRef.current,
+        title: tree.name,
+        icon: {
+          url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="12" cy="12" r="8" fill="${color}" stroke="white" stroke-width="2"/>
+              <path d="M12 6v12M6 12h12" stroke="white" stroke-width="2"/>
+            </svg>
+          `),
+          scaledSize: new google.maps.Size(24, 24),
+        }
+      });
 
-      marker.getElement().addEventListener('click', () => {
+      const infoWindow = new google.maps.InfoWindow({
+        content: `
+          <div style="padding: 8px; min-width: 200px;">
+            <h3 style="margin: 0 0 4px 0; font-weight: 600;">${tree.name}</h3>
+            <p style="margin: 0 0 4px 0; color: #666; font-size: 14px;">${tree.scientificName}</p>
+            <p style="margin: 0 0 4px 0; color: #999; font-size: 12px;">${tree.category} forestry</p>
+            <p style="margin: 0; color: #999; font-size: 12px;">H3: ${tree.location.h3Index}</p>
+          </div>
+        `
+      });
+
+      marker.addListener('click', () => {
+        infoWindow.open(mapInstanceRef.current, marker);
         onTreeClick(tree);
       });
-    });
-  }, [trees, onTreeClick]);
 
-  if (!mapboxToken) {
+      markersRef.current.push(marker);
+    });
+  }, [trees, onTreeClick, mapLoaded]);
+
+  if (!googleMapsKey) {
     return (
       <div className="relative w-full h-full flex items-center justify-center bg-gray-100">
         <div className="text-center space-y-4 p-8">
           <Settings className="h-16 w-16 text-gray-400 mx-auto" />
           <div>
-            <h3 className="text-lg font-semibold mb-2">Mapbox Configuration Required</h3>
+            <h3 className="text-lg font-semibold mb-2">Google Maps Configuration Required</h3>
             <p className="text-muted-foreground mb-4">
-              To use the map features, please configure your Mapbox access token.
+              To use the map features, please configure your Google Maps API key.
             </p>
             <Button onClick={() => setShowSettings(true)}>
-              Configure Mapbox
+              Configure Google Maps
             </Button>
           </div>
         </div>
@@ -138,7 +167,7 @@ const TreeMap = ({ trees, onTreeClick, onCameraClick }: TreeMapProps) => {
             <DialogHeader>
               <DialogTitle>Map Configuration</DialogTitle>
             </DialogHeader>
-            <MapboxSettings />
+            <GoogleMapsSettings />
           </DialogContent>
         </Dialog>
       </div>
@@ -147,7 +176,7 @@ const TreeMap = ({ trees, onTreeClick, onCameraClick }: TreeMapProps) => {
 
   return (
     <div className="relative w-full h-full">
-      <div ref={mapContainer} className="w-full h-full" />
+      <div ref={mapRef} className="w-full h-full" />
       
       {/* Camera FAB */}
       <Button
@@ -173,7 +202,7 @@ const TreeMap = ({ trees, onTreeClick, onCameraClick }: TreeMapProps) => {
           <DialogHeader>
             <DialogTitle>Map Settings</DialogTitle>
           </DialogHeader>
-          <MapboxSettings />
+          <GoogleMapsSettings />
         </DialogContent>
       </Dialog>
     </div>

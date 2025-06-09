@@ -7,23 +7,23 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { MapPin, ExternalLink } from 'lucide-react';
 
-const MapboxSettings = () => {
-  const [token, setToken] = useState('');
+const GoogleMapsSettings = () => {
+  const [apiKey, setApiKey] = useState('');
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    const savedToken = localStorage.getItem('mapbox_token');
-    if (savedToken) {
-      setToken(savedToken);
+    const savedKey = localStorage.getItem('google_maps_api_key');
+    if (savedKey) {
+      setApiKey(savedKey);
     }
   }, []);
 
   const handleSave = () => {
-    localStorage.setItem('mapbox_token', token);
+    localStorage.setItem('google_maps_api_key', apiKey);
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
     
-    // Reload the page to apply the new token
+    // Reload the page to apply the new API key
     window.location.reload();
   };
 
@@ -32,19 +32,19 @@ const MapboxSettings = () => {
       <CardHeader>
         <CardTitle className="flex items-center">
           <MapPin className="h-5 w-5 mr-2" />
-          Mapbox Configuration
+          Google Maps Configuration
         </CardTitle>
         <CardDescription>
-          Configure your Mapbox access token for map functionality
+          Configure your Google Maps API key for map functionality
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <Alert>
           <AlertDescription>
-            To use the map features, you need a Mapbox access token. Get one free at{' '}
+            To use the map features, you need a Google Maps API key. Get one free at{' '}
             <Button variant="link" className="p-0 h-auto" asChild>
-              <a href="https://mapbox.com" target="_blank" rel="noopener noreferrer">
-                mapbox.com
+              <a href="https://developers.google.com/maps/gmp-get-started" target="_blank" rel="noopener noreferrer">
+                Google Cloud Console
                 <ExternalLink className="h-3 w-3 ml-1" />
               </a>
             </Button>
@@ -52,31 +52,32 @@ const MapboxSettings = () => {
         </Alert>
 
         <div className="space-y-2">
-          <Label htmlFor="mapbox-token">Mapbox Access Token</Label>
+          <Label htmlFor="google-maps-key">Google Maps API Key</Label>
           <Input
-            id="mapbox-token"
+            id="google-maps-key"
             type="password"
-            value={token}
-            onChange={(e) => setToken(e.target.value)}
-            placeholder="pk.eyJ1IjoieW91ci11c2VybmFtZSIsImEiOiJjbGJt..."
+            value={apiKey}
+            onChange={(e) => setApiKey(e.target.value)}
+            placeholder="AIzaSyC..."
           />
           <p className="text-xs text-muted-foreground">
-            Your token will be stored locally and is required for map functionality
+            Your API key will be stored locally and is required for map functionality
           </p>
         </div>
 
-        <Button onClick={handleSave} disabled={!token} className="w-full">
-          {saved ? 'Saved!' : 'Save Token'}
+        <Button onClick={handleSave} disabled={!apiKey} className="w-full">
+          {saved ? 'Saved!' : 'Save API Key'}
         </Button>
 
         <div className="text-xs text-muted-foreground space-y-1">
-          <p>🔒 Tokens are stored locally in your browser</p>
-          <p>🆓 Mapbox offers generous free tier limits</p>
+          <p>🔒 API keys are stored locally in your browser</p>
+          <p>🆓 Google Maps offers $200 monthly credit (free tier)</p>
           <p>📍 Required for H3 geospatial mapping features</p>
+          <p>🌍 Enable Maps JavaScript API in Google Cloud Console</p>
         </div>
       </CardContent>
     </Card>
   );
 };
 
-export default MapboxSettings;
+export default GoogleMapsSettings;
