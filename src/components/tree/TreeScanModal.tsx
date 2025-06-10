@@ -24,12 +24,14 @@ const TreeScanModal = ({ isOpen, onClose }: TreeScanModalProps) => {
   const { addTree } = useTree();
 
   const handleCameraCapture = (imageFile: File) => {
+    console.log('Camera capture in modal:', imageFile.name);
     setCapturedPhoto(imageFile);
     setCurrentView('form');
   };
 
   const handleFormSubmit = async (data: TreeFormData, formLocation: { lat: number; lng: number }) => {
     try {
+      console.log('Submitting tree from modal:', data);
       await addTree(data, formLocation);
       onClose();
       setCurrentView('menu');
@@ -68,6 +70,7 @@ const TreeScanModal = ({ isOpen, onClose }: TreeScanModalProps) => {
             onSubmit={handleFormSubmit}
             onClose={() => setCurrentView('menu')}
             initialLocation={location || undefined}
+            capturedPhoto={capturedPhoto}
           />
         );
 
@@ -166,6 +169,7 @@ const TreeScanModal = ({ isOpen, onClose }: TreeScanModalProps) => {
               <p>📍 GPS location will be automatically captured</p>
               <p>🤖 AI will identify tree species and fill details</p>
               <p>🗺️ H3 geospatial indexing for precise mapping</p>
+              <p>🆓 No API keys required - uses OpenStreetMap</p>
             </div>
           </div>
         );

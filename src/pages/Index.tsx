@@ -1,10 +1,9 @@
-
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTree } from '@/contexts/TreeContext';
 import Navigation from '@/components/Navigation';
 import BottomNavigation from '@/components/navigation/BottomNavigation';
-import TreeMap from '@/components/map/TreeMap';
+import OSMTreeMap from '@/components/map/OSMTreeMap';
 import AuthModal from '@/components/auth/AuthModal';
 import TreeScanModal from '@/components/tree/TreeScanModal';
 import TreeLogView from '@/components/tree/TreeLogView';
@@ -37,7 +36,7 @@ const Index = () => {
       case 'home':
         return (
           <div className="h-full">
-            <TreeMap
+            <OSMTreeMap
               trees={trees}
               onTreeClick={handleTreeClick}
               onCameraClick={handleCameraClick}

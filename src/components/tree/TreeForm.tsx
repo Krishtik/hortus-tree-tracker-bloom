@@ -17,9 +17,10 @@ interface TreeFormProps {
   onSubmit: (data: TreeFormData, location: { lat: number; lng: number }) => void;
   onClose: () => void;
   initialLocation?: { lat: number; lng: number };
+  capturedPhoto?: File | null;
 }
 
-const TreeForm = ({ onSubmit, onClose, initialLocation }: TreeFormProps) => {
+const TreeForm = ({ onSubmit, onClose, initialLocation, capturedPhoto }: TreeFormProps) => {
   const [showCamera, setShowCamera] = useState(false);
   const [isIdentifying, setIsIdentifying] = useState(false);
   const [aiResult, setAiResult] = useState<TreeIdentificationResult | null>(null);
@@ -44,25 +45,38 @@ const TreeForm = ({ onSubmit, onClose, initialLocation }: TreeFormProps) => {
         },
         (error) => {
           console.error('Error getting location:', error);
+          // Default to New Delhi, India
+          setLocation({ lat: 28.6139, lng: 77.2090 });
         }
       );
     }
   }, [initialLocation]);
 
-  const handlePhotoCapture = async (imageFile: File) => {
-    setShowCamera(false);
-    setPhotos(prev => ({ ...prev, tree: imageFile }));
-    
-    // Try to identify the tree using AI
+  useEffect(() => {
+    // Process captured photo from TreeScanModal
+    if (capturedPhoto) {
+      setPhotos(prev => ({ ...prev, tree: capturedPhoto }));
+      handleAIIdentification(capturedPhoto);
+    }
+  }, [capturedPhoto]);
+
+  const handleAIIdentification = async (imageFile: File) => {
     setIsIdentifying(true);
     try {
+      console.log('Starting AI identification for:', imageFile.name);
       const result = await aiService.identifyTree(imageFile);
+      console.log('AI identification result:', result);
+      
       setAiResult(result);
       
       // Auto-fill form with AI results
       setValue('name', result.commonName);
       setValue('scientificName', result.scientificName);
-      setValue('localName', result.localName);
+      if (result.localName) {
+        setValue('localName', result.localName);
+      }
+      
+      console.log('Form auto-filled with AI data');
     } catch (error) {
       console.error('AI identification failed:', error);
     } finally {
@@ -70,14 +84,30 @@ const TreeForm = ({ onSubmit, onClose, initialLocation }: TreeFormProps) => {
     }
   };
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>, photoType: string) => {
+  const handlePhotoCapture = async (imageFile: File) => {
+    console.log('Photo captured:', imageFile.name);
+    setShowCamera(false);
+    setPhotos(prev => ({ ...prev, tree: imageFile }));
+    
+    // Try to identify the tree using AI
+    await handleAIIdentification(imageFile);
+  };
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>, photoType: string) => {
     const file = event.target.files?.[0];
     if (file) {
+      console.log('File uploaded:', file.name, 'for type:', photoType);
       setPhotos(prev => ({ ...prev, [photoType]: file }));
+      
+      // If it's the main tree photo, run AI identification
+      if (photoType === 'tree') {
+        await handleAIIdentification(file);
+      }
     }
   };
 
   const handleFormSubmit = (data: TreeFormData) => {
+    console.log('Submitting form with data:', data);
     const formData = {
       ...data,
       photos: photos as any
@@ -155,6 +185,15 @@ const TreeForm = ({ onSubmit, onClose, initialLocation }: TreeFormProps) => {
               </Button>
             </div>
           </div>
+
+          {/* Show captured/uploaded photo */}
+          {photos.tree && (
+            <div className="text-center">
+              <div className="inline-block bg-green-100 px-3 py-1 rounded-full text-sm text-green-800">
+                ✓ Main photo captured
+              </div>
+            </div>
+          )}
 
           {/* Additional photo uploads */}
           <div className="grid grid-cols-2 gap-2">
