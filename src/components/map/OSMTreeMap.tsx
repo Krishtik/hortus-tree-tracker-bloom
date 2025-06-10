@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import 'leaflet/dist/leaflet.css';
 
 // Fix marker icon issue with Leaflet
-delete L.Icon.Default.prototype._getIconUrl;
+delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
@@ -30,7 +30,7 @@ const createTreeIcon = (category: string) => {
     nursery: '#eab308'    // Yellow
   };
   
-  const color = colors[category] || '#22c55e';
+  const color = colors[category as keyof typeof colors] || '#22c55e';
   
   return L.divIcon({
     html: `
