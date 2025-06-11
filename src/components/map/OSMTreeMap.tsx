@@ -22,7 +22,7 @@ interface OSMTreeMapProps {
   onCameraClick: () => void;
 }
 
-// Custom icon creator for different tree categories using L.Icon
+// Custom icon creator for different tree categories using L.icon
 const createTreeIcon = (category: string) => {
   const iconUrls = {
     farm: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
@@ -32,7 +32,7 @@ const createTreeIcon = (category: string) => {
   
   const iconUrl = iconUrls[category as keyof typeof iconUrls] || iconUrls.farm;
   
-  return new L.Icon({
+  return L.icon({
     iconUrl: iconUrl,
     shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
     iconSize: [25, 41],
@@ -44,7 +44,7 @@ const createTreeIcon = (category: string) => {
 
 // User location icon
 const createUserIcon = () => {
-  return new L.Icon({
+  return L.icon({
     iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
     shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
     iconSize: [20, 32],

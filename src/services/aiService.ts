@@ -1,4 +1,3 @@
-
 interface TreeIdentificationResult {
   scientificName: string;
   commonName: string;
@@ -23,6 +22,14 @@ interface TreeIdentificationResult {
 
 class AIService {
   private googleApiKey = 'AIzaSyCegQpIZLNkq9dQD8diK_RR2TOO4gjCrmI';
+
+  setApiKey(apiKey: string) {
+    if (apiKey && apiKey.trim()) {
+      this.googleApiKey = apiKey.trim();
+      localStorage.setItem('ai_api_key', apiKey.trim());
+      console.log('AI API key updated');
+    }
+  }
 
   async identifyTree(imageFile: File): Promise<TreeIdentificationResult> {
     console.log('Starting tree identification with Google Vision API...');
