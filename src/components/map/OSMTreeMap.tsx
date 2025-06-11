@@ -22,7 +22,7 @@ interface OSMTreeMapProps {
   onCameraClick: () => void;
 }
 
-// Custom icon creator for different tree categories using L.icon
+// Custom icon creator for different tree categories
 const createTreeIcon = (category: string) => {
   const iconUrls = {
     farm: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
@@ -32,7 +32,7 @@ const createTreeIcon = (category: string) => {
   
   const iconUrl = iconUrls[category as keyof typeof iconUrls] || iconUrls.farm;
   
-  return L.icon({
+  return new L.Icon({
     iconUrl: iconUrl,
     shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
     iconSize: [25, 41],
@@ -44,7 +44,7 @@ const createTreeIcon = (category: string) => {
 
 // User location icon
 const createUserIcon = () => {
-  return L.icon({
+  return new L.Icon({
     iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
     shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
     iconSize: [20, 32],
@@ -54,13 +54,16 @@ const createUserIcon = () => {
   });
 };
 
-// Component to handle map updates
+// Component to handle map updates with smooth animation
 const MapUpdater = ({ center }: { center: [number, number] | null }) => {
   const map = useMap();
   
   useEffect(() => {
     if (center) {
-      map.setView(center, map.getZoom());
+      map.flyTo(center, 15, {
+        animate: true,
+        duration: 1.5
+      });
     }
   }, [center, map]);
   
@@ -71,64 +74,75 @@ const OSMTreeMap = ({ trees, onTreeClick, onCameraClick }: OSMTreeMapProps) => {
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [isLoadingLocation, setIsLoadingLocation] = useState(true);
+  const [address, setAddress] = useState<string>('');
 
-  useEffect(() => {
-    console.log('OSMTreeMap loaded with trees:', trees.length);
+  // Enhanced geolocation with better accuracy for Indian locations
+  const getCurrentLocation = () => {
+    setIsLoadingLocation(true);
     
-    // Get user location
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (position) => {
+        async (position) => {
           const { latitude, longitude } = position.coords;
-          console.log('User location:', latitude, longitude);
-          setUserLocation([latitude, longitude]);
+          console.log('Accurate location obtained:', latitude, longitude);
+          
+          const newLocation: [number, number] = [latitude, longitude];
+          setUserLocation(newLocation);
+          
+          // Reverse geocoding to get address
+          try {
+            const response = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`
+            );
+            const data = await response.json();
+            const displayName = data.display_name || `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
+            setAddress(displayName);
+            console.log('Address resolved:', displayName);
+          } catch (error) {
+            console.error('Geocoding failed:', error);
+            setAddress(`${latitude.toFixed(6)}, ${longitude.toFixed(6)}`);
+          }
+          
           setIsLoadingLocation(false);
         },
         (error) => {
-          console.error('Error getting location:', error);
-          // Default to New Delhi, India
-          setUserLocation([28.6139, 77.2090]);
+          console.error('Enhanced geolocation error:', error);
+          // Fallback to Maharashtra center instead of Delhi
+          const maharashtraCenter: [number, number] = [19.7515, 75.7139];
+          setUserLocation(maharashtraCenter);
+          setAddress('Maharashtra, India (Approximate)');
           setIsLoadingLocation(false);
         },
         {
           enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 60000
+          timeout: 15000,
+          maximumAge: 30000
         }
       );
     } else {
-      setUserLocation([28.6139, 77.2090]);
+      // Default to Maharashtra center
+      setUserLocation([19.7515, 75.7139]);
+      setAddress('Maharashtra, India (Geolocation not supported)');
       setIsLoadingLocation(false);
     }
+  };
+
+  useEffect(() => {
+    console.log('OSMTreeMap loaded with trees:', trees.length);
+    getCurrentLocation();
   }, [trees]);
 
   const handleLocateUser = () => {
-    setIsLoadingLocation(true);
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          setUserLocation([latitude, longitude]);
-          setIsLoadingLocation(false);
-        },
-        (error) => {
-          console.error('Error getting location:', error);
-          setIsLoadingLocation(false);
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 5000
-        }
-      );
-    }
+    getCurrentLocation();
   };
 
   if (!userLocation) {
     return (
-      <div className="relative w-full h-full flex items-center justify-center bg-gray-100">
+      <div className="relative w-full h-full flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-50 dark:from-gray-900 dark:to-gray-800">
         <div className="text-center space-y-4">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto"></div>
           <p className="text-muted-foreground">Loading map...</p>
+          <p className="text-xs text-muted-foreground">Detecting your location...</p>
         </div>
       </div>
     );
@@ -141,7 +155,7 @@ const OSMTreeMap = ({ trees, onTreeClick, onCameraClick }: OSMTreeMapProps) => {
           center={userLocation}
           zoom={15}
           style={{ height: '100%', width: '100%' }}
-          className="z-0"
+          className="z-0 rounded-lg"
         >
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -153,12 +167,16 @@ const OSMTreeMap = ({ trees, onTreeClick, onCameraClick }: OSMTreeMapProps) => {
           {/* User location marker */}
           <Marker position={userLocation} icon={createUserIcon()}>
             <Popup>
-              <div className="text-center">
-                <strong>Your Location</strong>
+              <div className="text-center max-w-xs">
+                <strong className="text-green-800">Your Location</strong>
                 <br />
-                <small>Lat: {userLocation[0].toFixed(6)}</small>
+                <small className="text-xs text-muted-foreground">
+                  {address}
+                </small>
                 <br />
-                <small>Lng: {userLocation[1].toFixed(6)}</small>
+                <small className="text-xs">Lat: {userLocation[0].toFixed(6)}</small>
+                <br />
+                <small className="text-xs">Lng: {userLocation[1].toFixed(6)}</small>
               </div>
             </Popup>
           </Marker>
@@ -195,27 +213,27 @@ const OSMTreeMap = ({ trees, onTreeClick, onCameraClick }: OSMTreeMapProps) => {
         </MapContainer>
       </div>
 
-      {/* Camera FAB */}
+      {/* Enhanced Camera FAB */}
       <Button
         onClick={onCameraClick}
         size="lg"
-        className="fixed top-20 right-4 z-10 rounded-full w-14 h-14 bg-green-600 hover:bg-green-700 shadow-lg"
+        className="fixed top-20 right-4 z-10 rounded-full w-14 h-14 bg-green-600 hover:bg-green-700 shadow-lg transition-all duration-200 hover:scale-105 dark:bg-green-700 dark:hover:bg-green-800"
       >
-        <Camera className="h-6 w-6" />
+        <Camera className="h-6 w-6 text-white" />
       </Button>
 
-      {/* Locate User FAB */}
+      {/* Enhanced Locate User FAB */}
       <Button
         onClick={handleLocateUser}
         size="sm"
         variant="outline"
         disabled={isLoadingLocation}
-        className="fixed bottom-24 right-4 z-10 rounded-full w-12 h-12 bg-white shadow-lg"
+        className="fixed bottom-24 right-4 z-10 rounded-full w-12 h-12 bg-white dark:bg-gray-800 shadow-lg transition-all duration-200 hover:scale-105"
       >
         {isLoadingLocation ? (
           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600"></div>
         ) : (
-          <Locate className="h-4 w-4" />
+          <Locate className="h-4 w-4 text-gray-700 dark:text-gray-300" />
         )}
       </Button>
 
@@ -224,40 +242,46 @@ const OSMTreeMap = ({ trees, onTreeClick, onCameraClick }: OSMTreeMapProps) => {
         onClick={() => setShowSettings(true)}
         size="sm"
         variant="outline"
-        className="fixed top-20 left-4 z-10 rounded-full w-10 h-10 bg-white shadow-lg"
+        className="fixed top-20 left-4 z-10 rounded-full w-10 h-10 bg-white dark:bg-gray-800 shadow-lg transition-all duration-200 hover:scale-105"
       >
-        <Settings className="h-4 w-4" />
+        <Settings className="h-4 w-4 text-gray-700 dark:text-gray-300" />
       </Button>
 
       <Dialog open={showSettings} onOpenChange={setShowSettings}>
-        <DialogContent>
+        <DialogContent className="dark:bg-gray-800 dark:border-gray-700">
           <DialogHeader>
-            <DialogTitle>Map Settings</DialogTitle>
+            <DialogTitle className="dark:text-white">Map Settings</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="text-center">
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground dark:text-gray-300">
                 Using OpenStreetMap tiles
               </p>
-              <p className="text-xs text-muted-foreground mt-2">
+              <p className="text-xs text-muted-foreground mt-2 dark:text-gray-400">
                 No API key required • Free and open source
               </p>
             </div>
+            
+            <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+              <p className="text-xs font-medium text-green-800 dark:text-green-300 mb-1">Current Location</p>
+              <p className="text-xs text-green-700 dark:text-green-400">{address}</p>
+            </div>
+
             <div className="space-y-2 text-sm">
               <div className="flex items-center space-x-2">
                 <div className="w-4 h-4 bg-green-500 rounded-full"></div>
-                <span>Farm Forestry ({trees.filter(t => t.category === 'farm').length})</span>
+                <span className="dark:text-gray-300">Farm Forestry ({trees.filter(t => t.category === 'farm').length})</span>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-4 h-4 bg-blue-500 rounded-full"></div>
-                <span>Community Forestry ({trees.filter(t => t.category === 'community').length})</span>
+                <span className="dark:text-gray-300">Community Forestry ({trees.filter(t => t.category === 'community').length})</span>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-4 h-4 bg-red-500 rounded-full"></div>
-                <span>Nursery Forestry ({trees.filter(t => t.category === 'nursery').length})</span>
+                <span className="dark:text-gray-300">Nursery Forestry ({trees.filter(t => t.category === 'nursery').length})</span>
               </div>
             </div>
-            <div className="text-center text-xs text-muted-foreground">
+            <div className="text-center text-xs text-muted-foreground dark:text-gray-400">
               Total Trees: {trees.length}
             </div>
           </div>
