@@ -1,9 +1,9 @@
 
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { bell, circle-check, x } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Bell, CheckCheck, Clock, AlertCircle } from 'lucide-react';
 
 interface NotificationModalProps {
   isOpen: boolean;
@@ -14,8 +14,8 @@ interface Notification {
   id: string;
   title: string;
   message: string;
-  time: string;
-  type: 'info' | 'success' | 'warning';
+  type: 'info' | 'warning' | 'success';
+  timestamp: Date;
   read: boolean;
 }
 
@@ -23,129 +23,130 @@ const NotificationModal = ({ isOpen, onClose }: NotificationModalProps) => {
   const [notifications, setNotifications] = useState<Notification[]>([
     {
       id: '1',
-      title: 'New Tree Added Nearby',
-      message: 'A Banyan tree was tagged 0.5km from your location in Maharashtra',
-      time: '5 minutes ago',
-      type: 'info',
+      title: 'Tree Verification Complete',
+      message: 'Your Neem tree submission has been verified by the community.',
+      type: 'success',
+      timestamp: new Date(Date.now() - 1000 * 60 * 30),
       read: false
     },
     {
       id: '2',
-      title: 'Enhanced AI Identification Complete',
-      message: 'Your recent tree scan has been processed with color analysis and cultural data',
-      time: '1 hour ago',
-      type: 'success',
+      title: 'New Tree Species Detected',
+      message: 'AI has identified a rare species in your area - Butea monosperma.',
+      type: 'info',
+      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
       read: false
     },
     {
       id: '3',
-      title: 'Tree Verification Approved',
-      message: 'Your Neem tree entry has been verified by the community with Sangam Land data',
-      time: '2 hours ago',
-      type: 'success',
-      read: true
-    },
-    {
-      id: '4',
-      title: 'Location Services Enhanced',
-      message: 'GPS accuracy improved for better tree tagging in your region',
-      time: '3 hours ago',
+      title: 'Weekly Progress Update',
+      message: 'You have tagged 5 trees this week! Keep up the great work.',
       type: 'info',
-      read: false
+      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24),
+      read: true
     }
   ]);
 
   const markAllAsRead = () => {
-    setNotifications(prev => 
-      prev.map(notification => ({ ...notification, read: true }))
-    );
+    setNotifications(notifications.map(notif => ({ ...notif, read: true })));
   };
 
   const markAsRead = (id: string) => {
-    setNotifications(prev =>
-      prev.map(notification =>
-        notification.id === id ? { ...notification, read: true } : notification
-      )
-    );
+    setNotifications(notifications.map(notif => 
+      notif.id === id ? { ...notif, read: true } : notif
+    ));
+  };
+
+  const getNotificationIcon = (type: string) => {
+    switch (type) {
+      case 'success':
+        return <CheckCheck className="h-5 w-5 text-green-500" />;
+      case 'warning':
+        return <AlertCircle className="h-5 w-5 text-yellow-500" />;
+      default:
+        return <Bell className="h-5 w-5 text-blue-500" />;
+    }
   };
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md dark:bg-gray-800 dark:border-gray-700">
+      <DialogContent className="sm:max-w-md max-h-[80vh] overflow-y-auto bg-background border-border">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 dark:text-white">
-            <bell className="h-5 w-5" />
+          <DialogTitle className="flex items-center gap-2 text-foreground">
+            <Bell className="h-5 w-5" />
             Notifications
             {unreadCount > 0 && (
-              <Badge variant="secondary" className="ml-2 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
-                {unreadCount} new
+              <Badge variant="secondary" className="bg-red-500 text-white">
+                {unreadCount}
               </Badge>
             )}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-3 max-h-96 overflow-y-auto">
-          {notifications.map((notification) => (
-            <div
-              key={notification.id}
-              className={`p-3 rounded-lg border transition-all duration-200 ${
-                notification.read 
-                  ? 'bg-muted/50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-600' 
-                  : 'bg-background dark:bg-gray-800 border-primary/20 dark:border-green-600/30 shadow-sm'
-              }`}
+        <div className="space-y-4">
+          {unreadCount > 0 && (
+            <Button
+              onClick={markAllAsRead}
+              variant="outline"
+              size="sm"
+              className="w-full border-border text-foreground hover:bg-accent"
             >
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h4 className="font-medium text-sm dark:text-white">{notification.title}</h4>
-                    {!notification.read && (
-                      <Badge variant="secondary" className="h-2 w-2 p-0 rounded-full bg-primary dark:bg-green-500"></Badge>
-                    )}
-                  </div>
-                  <p className="text-sm text-muted-foreground dark:text-gray-300 leading-relaxed">
-                    {notification.message}
-                  </p>
-                  <p className="text-xs text-muted-foreground dark:text-gray-400 mt-2">
-                    {notification.time}
-                  </p>
-                </div>
-                {!notification.read && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => markAsRead(notification.id)}
-                    className="ml-2 h-8 w-8 p-0 hover:bg-green-100 dark:hover:bg-green-900/30"
-                  >
-                    <circle-check className="h-4 w-4 text-green-600 dark:text-green-400" />
-                  </Button>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
+              <CheckCheck className="h-4 w-4 mr-2" />
+              Mark All as Read
+            </Button>
+          )}
 
-        <div className="flex gap-2 pt-4 border-t dark:border-gray-700">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="flex-1 dark:border-gray-600 dark:text-gray-300"
-            onClick={markAllAsRead}
-            disabled={unreadCount === 0}
-          >
-            <circle-check className="h-4 w-4 mr-2" />
-            Mark All Read {unreadCount > 0 && `(${unreadCount})`}
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={onClose}
-            className="dark:border-gray-600 dark:text-gray-300"
-          >
-            <x className="h-4 w-4 mr-2" />
-            Close
-          </Button>
+          <div className="space-y-3">
+            {notifications.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <Bell className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>No notifications yet</p>
+              </div>
+            ) : (
+              notifications.map((notification) => (
+                <div
+                  key={notification.id}
+                  className={`p-4 rounded-lg border transition-all duration-200 cursor-pointer ${
+                    notification.read
+                      ? 'bg-muted/50 border-border'
+                      : 'bg-accent/50 border-primary/20 hover:bg-accent/70'
+                  }`}
+                  onClick={() => markAsRead(notification.id)}
+                >
+                  <div className="flex items-start gap-3">
+                    {getNotificationIcon(notification.type)}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <h4 className={`font-medium text-sm ${
+                          notification.read ? 'text-muted-foreground' : 'text-foreground'
+                        }`}>
+                          {notification.title}
+                        </h4>
+                        {!notification.read && (
+                          <div className="w-2 h-2 bg-primary rounded-full"></div>
+                        )}
+                      </div>
+                      <p className={`text-sm mt-1 ${
+                        notification.read ? 'text-muted-foreground' : 'text-foreground/80'
+                      }`}>
+                        {notification.message}
+                      </p>
+                      <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
+                        <Clock className="h-3 w-3" />
+                        {notification.timestamp.toLocaleDateString()} at{' '}
+                        {notification.timestamp.toLocaleTimeString([], {
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </DialogContent>
     </Dialog>

@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Camera, Upload, map-pin, Settings } from 'lucide-react';
+import { Camera, Upload, MapPin, Settings } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useTree } from '@/contexts/TreeContext';
@@ -124,7 +124,7 @@ const TreeScanModal = ({ isOpen, onClose }: TreeScanModalProps) => {
             <div className="text-center space-y-4">
               <div className="flex items-center justify-center space-x-4">
                 <Camera className="h-12 w-12 text-green-600" />
-                <map-pin className="h-8 w-8 text-blue-600" />
+                <MapPin className="h-8 w-8 text-blue-600" />
               </div>
               
               <div>
