@@ -1,14 +1,17 @@
+
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTree } from '@/contexts/TreeContext';
 import Navigation from '@/components/Navigation';
 import BottomNavigation from '@/components/navigation/BottomNavigation';
+import EnhancedNavigation from '@/components/navigation/EnhancedNavigation';
 import OSMTreeMap from '@/components/map/OSMTreeMap';
 import AuthModal from '@/components/auth/AuthModal';
 import TreeScanModal from '@/components/tree/TreeScanModal';
 import TreeLogView from '@/components/tree/TreeLogView';
 import ProfileView from '@/components/profile/ProfileView';
 import TreeDetailModal from '@/components/tree/TreeDetailModal';
+import NotificationModal from '@/components/notifications/NotificationModal';
 import { Tree } from '@/types/tree';
 import { Leaf, TreePine, Flower } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,10 +21,13 @@ import { Button } from '@/components/ui/button';
 const Index = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showScanModal, setShowScanModal] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
   const [selectedTree, setSelectedTree] = useState<Tree | null>(null);
   const [activeTab, setActiveTab] = useState<'home' | 'scan' | 'log' | 'profile'>('home');
   const { isAuthenticated } = useAuth();
   const { trees } = useTree();
+
+  console.log('Index component rendered with trees:', trees.length);
 
   const handleTreeClick = (tree: Tree) => {
     setSelectedTree(tree);
@@ -163,6 +169,12 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* Enhanced Mobile Navigation */}
+      <EnhancedNavigation 
+        onNotificationClick={() => setShowNotifications(true)}
+        onSettingsClick={() => {}}
+      />
+
       {/* Top Navigation - Hidden on mobile, shown on desktop */}
       <div className="hidden md:block">
         <Navigation 
@@ -188,6 +200,11 @@ const Index = () => {
       <TreeScanModal 
         isOpen={showScanModal} 
         onClose={() => setShowScanModal(false)} 
+      />
+
+      <NotificationModal
+        isOpen={showNotifications}
+        onClose={() => setShowNotifications(false)}
       />
 
       {selectedTree && (

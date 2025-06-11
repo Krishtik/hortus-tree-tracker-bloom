@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { latLngToCell } from 'h3-js';
 import { Tree, TreeFormData } from '@/types/tree';
@@ -24,25 +23,129 @@ export const useTree = () => {
   return context;
 };
 
+// Sample trees for demonstration
+const sampleTrees: Tree[] = [
+  {
+    id: 'sample-1',
+    name: 'Mango Tree',
+    scientificName: 'Mangifera indica',
+    localName: 'आम का पेड़',
+    category: 'farm',
+    location: {
+      lat: 28.6139,
+      lng: 77.2090,
+      h3Index: latLngToCell(28.6139, 77.2090, 9)
+    },
+    measurements: {
+      height: 15,
+      trunkWidth: 45
+    },
+    photos: {},
+    metadata: {},
+    taggedBy: 'demo-user',
+    taggedAt: new Date('2024-01-15'),
+    isAIGenerated: true,
+    isVerified: false
+  },
+  {
+    id: 'sample-2',
+    name: 'Neem Tree',
+    scientificName: 'Azadirachta indica',
+    localName: 'नीम का पेड़',
+    category: 'community',
+    location: {
+      lat: 28.6129,
+      lng: 77.2085,
+      h3Index: latLngToCell(28.6129, 77.2085, 9)
+    },
+    measurements: {
+      height: 12,
+      trunkWidth: 35
+    },
+    photos: {},
+    metadata: {},
+    taggedBy: 'demo-user',
+    taggedAt: new Date('2024-01-16'),
+    isAIGenerated: true,
+    isVerified: true
+  },
+  {
+    id: 'sample-3',
+    name: 'Rose Plant',
+    scientificName: 'Rosa indica',
+    localName: 'गुलाब का पौधा',
+    category: 'nursery',
+    location: {
+      lat: 28.6149,
+      lng: 77.2095,
+      h3Index: latLngToCell(28.6149, 77.2095, 9)
+    },
+    measurements: {
+      height: 2,
+      trunkWidth: 5
+    },
+    photos: {},
+    metadata: {},
+    taggedBy: 'demo-user',
+    taggedAt: new Date('2024-01-17'),
+    isAIGenerated: false,
+    isVerified: true
+  },
+  {
+    id: 'sample-4',
+    name: 'Banyan Tree',
+    scientificName: 'Ficus benghalensis',
+    localName: 'बरगद का पेड़',
+    category: 'community',
+    location: {
+      lat: 28.6135,
+      lng: 77.2100,
+      h3Index: latLngToCell(28.6135, 77.2100, 9)
+    },
+    measurements: {
+      height: 25,
+      trunkWidth: 120
+    },
+    photos: {},
+    metadata: {},
+    taggedBy: 'demo-user',
+    taggedAt: new Date('2024-01-18'),
+    isAIGenerated: false,
+    isVerified: true
+  }
+];
+
 export const TreeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [trees, setTrees] = useState<Tree[]>([]);
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
-    // Load trees from localStorage (temporary until backend is ready)
+    // Load trees from localStorage and merge with sample data
     const storedTrees = localStorage.getItem('krish_hortus_trees');
+    let existingTrees: Tree[] = [];
+    
     if (storedTrees) {
       try {
-        const parsedTrees = JSON.parse(storedTrees).map((tree: any) => ({
+        existingTrees = JSON.parse(storedTrees).map((tree: any) => ({
           ...tree,
           taggedAt: new Date(tree.taggedAt)
         }));
-        setTrees(parsedTrees);
       } catch (error) {
         console.error('Error parsing stored trees:', error);
       }
     }
+
+    // Merge sample trees with existing trees (avoid duplicates)
+    const allTrees = [...sampleTrees];
+    existingTrees.forEach(tree => {
+      if (!allTrees.find(t => t.id === tree.id)) {
+        allTrees.push(tree);
+      }
+    });
+
+    setTrees(allTrees);
+    console.log('Loaded trees:', allTrees.length);
   }, []);
 
   const addTree = async (treeData: TreeFormData, location: { lat: number; lng: number }) => {
@@ -68,7 +171,6 @@ export const TreeProvider: React.FC<{ children: React.ReactNode }> = ({ children
           trunkWidth: treeData.trunkWidth
         },
         photos: {
-          // Convert File objects to URLs (in production, these would be uploaded to cloud storage)
           tree: treeData.photos.tree ? URL.createObjectURL(treeData.photos.tree) : undefined,
           leaves: treeData.photos.leaves ? URL.createObjectURL(treeData.photos.leaves) : undefined,
           bark: treeData.photos.bark ? URL.createObjectURL(treeData.photos.bark) : undefined,
