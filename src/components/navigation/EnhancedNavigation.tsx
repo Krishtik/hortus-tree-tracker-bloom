@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Bell, Settings, ChevronDown } from 'lucide-react';
+import { Bell, ChevronDown, FileText, User } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useTheme } from 'next-themes';
 import {
@@ -13,12 +13,18 @@ import {
 
 interface EnhancedNavigationProps {
   onNotificationClick: () => void;
-  onSettingsClick: () => void;
+  activeTab?: 'home' | 'scan' | 'log' | 'profile';
+  onTabChange?: (tab: 'home' | 'scan' | 'log' | 'profile') => void;
+  unreadNotifications?: number;
 }
 
-const EnhancedNavigation = ({ onNotificationClick, onSettingsClick }: EnhancedNavigationProps) => {
+const EnhancedNavigation = ({ 
+  onNotificationClick, 
+  activeTab = 'home',
+  onTabChange,
+  unreadNotifications = 0
+}: EnhancedNavigationProps) => {
   const { theme, setTheme } = useTheme();
-  const [unreadNotifications] = useState(3);
 
   return (
     <nav className="bg-background border-b border-border shadow-sm transition-colors duration-200">
@@ -39,6 +45,36 @@ const EnhancedNavigation = ({ onNotificationClick, onSettingsClick }: EnhancedNa
                 </p>
               </div>
             </div>
+          </div>
+
+          {/* Desktop Navigation Tabs - Hidden on mobile */}
+          <div className="hidden md:flex items-center space-x-2">
+            <Button
+              variant={activeTab === 'home' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => onTabChange?.('home')}
+              className="text-sm"
+            >
+              Map
+            </Button>
+            <Button
+              variant={activeTab === 'log' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => onTabChange?.('log')}
+              className="text-sm"
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              Tree Log
+            </Button>
+            <Button
+              variant={activeTab === 'profile' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => onTabChange?.('profile')}
+              className="text-sm"
+            >
+              <User className="h-4 w-4 mr-2" />
+              Profile
+            </Button>
           </div>
 
           {/* Right Side Actions */}
@@ -95,16 +131,6 @@ const EnhancedNavigation = ({ onNotificationClick, onSettingsClick }: EnhancedNa
                   {unreadNotifications}
                 </Badge>
               )}
-            </Button>
-
-            {/* Settings */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onSettingsClick}
-              className="border-border text-foreground hover:bg-accent"
-            >
-              <Settings className="h-4 w-4" />
             </Button>
           </div>
         </div>

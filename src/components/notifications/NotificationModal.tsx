@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -8,6 +8,7 @@ import { Bell, CheckCheck, Clock, AlertCircle } from 'lucide-react';
 interface NotificationModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onUnreadCountChange?: (count: number) => void;
 }
 
 interface Notification {
@@ -19,7 +20,7 @@ interface Notification {
   read: boolean;
 }
 
-const NotificationModal = ({ isOpen, onClose }: NotificationModalProps) => {
+const NotificationModal = ({ isOpen, onClose, onUnreadCountChange }: NotificationModalProps) => {
   const [notifications, setNotifications] = useState<Notification[]>([
     {
       id: '1',
@@ -47,6 +48,13 @@ const NotificationModal = ({ isOpen, onClose }: NotificationModalProps) => {
     }
   ]);
 
+  const unreadCount = notifications.filter(n => !n.read).length;
+
+  // Notify parent component when unread count changes
+  useEffect(() => {
+    onUnreadCountChange?.(unreadCount);
+  }, [unreadCount, onUnreadCountChange]);
+
   const markAllAsRead = () => {
     setNotifications(notifications.map(notif => ({ ...notif, read: true })));
   };
@@ -67,8 +75,6 @@ const NotificationModal = ({ isOpen, onClose }: NotificationModalProps) => {
         return <Bell className="h-5 w-5 text-blue-500" />;
     }
   };
-
-  const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>

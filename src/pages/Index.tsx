@@ -24,6 +24,7 @@ const Index = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [selectedTree, setSelectedTree] = useState<Tree | null>(null);
   const [activeTab, setActiveTab] = useState<'home' | 'scan' | 'log' | 'profile'>('home');
+  const [unreadNotifications, setUnreadNotifications] = useState(3);
   const { isAuthenticated } = useAuth();
   const { trees } = useTree();
 
@@ -35,6 +36,14 @@ const Index = () => {
 
   const handleCameraClick = () => {
     setShowScanModal(true);
+  };
+
+  const handleTabChange = (tab: 'home' | 'scan' | 'log' | 'profile') => {
+    if (tab === 'scan') {
+      setShowScanModal(true);
+    } else {
+      setActiveTab(tab);
+    }
   };
 
   const renderTabContent = () => {
@@ -168,11 +177,13 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
       {/* Enhanced Mobile Navigation */}
       <EnhancedNavigation 
         onNotificationClick={() => setShowNotifications(true)}
-        onSettingsClick={() => {}}
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
+        unreadNotifications={unreadNotifications}
       />
 
       {/* Top Navigation - Hidden on mobile, shown on desktop */}
@@ -192,7 +203,7 @@ const Index = () => {
       <div className="md:hidden">
         <BottomNavigation 
           activeTab={activeTab}
-          onTabChange={setActiveTab}
+          onTabChange={handleTabChange}
         />
       </div>
 
@@ -205,6 +216,7 @@ const Index = () => {
       <NotificationModal
         isOpen={showNotifications}
         onClose={() => setShowNotifications(false)}
+        onUnreadCountChange={setUnreadNotifications}
       />
 
       {selectedTree && (
