@@ -12,6 +12,7 @@ declare module 'leaflet' {
   }
 
   export function divIcon(options: any): any;
+  export function icon(options: any): any;
   
   export namespace Icon {
     const Default: {
@@ -41,8 +42,11 @@ declare module 'react-leaflet' {
     position: [number, number];
     icon?: any;
     children?: React.ReactNode;
+    draggable?: boolean;
     eventHandlers?: {
       click?: () => void;
+      dragstart?: () => void;
+      dragend?: (event: any) => void;
     };
   }
 
