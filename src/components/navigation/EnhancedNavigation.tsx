@@ -50,14 +50,6 @@ const EnhancedNavigation = ({
           {/* Desktop Navigation Tabs - Hidden on mobile */}
           <div className="hidden md:flex items-center space-x-2">
             <Button
-              variant={activeTab === 'home' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => onTabChange?.('home')}
-              className="text-sm"
-            >
-              Map
-            </Button>
-            <Button
               variant={activeTab === 'log' ? 'default' : 'ghost'}
               size="sm"
               onClick={() => onTabChange?.('log')}

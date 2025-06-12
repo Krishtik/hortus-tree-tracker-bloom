@@ -70,9 +70,6 @@ const ProfileView = () => {
         <Button variant="outline" className="w-full">
           Export My Data
         </Button>
-        <Button variant="outline" className="w-full">
-          Settings
-        </Button>
         <Button 
           variant="destructive" 
           className="w-full"

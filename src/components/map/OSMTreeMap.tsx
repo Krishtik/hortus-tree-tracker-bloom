@@ -6,6 +6,8 @@ import { Camera, Settings, Locate } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tree } from '@/types/tree';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { latLngToCell } from 'h3-js';
+import { useTree } from '@/contexts/TreeContext';
 import 'leaflet/dist/leaflet.css';
 
 // Fix marker icon issue with Leaflet
@@ -32,7 +34,7 @@ const createTreeIcon = (category: string) => {
   
   const iconUrl = iconUrls[category as keyof typeof iconUrls] || iconUrls.farm;
   
-  return L.icon({
+  return new L.Icon({
     iconUrl: iconUrl,
     shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
     iconSize: [25, 41],
@@ -44,7 +46,7 @@ const createTreeIcon = (category: string) => {
 
 // User location icon
 const createUserIcon = () => {
-  return L.icon({
+  return new L.Icon({
     iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
     shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
     iconSize: [20, 32],
@@ -76,6 +78,7 @@ const OSMTreeMap = ({ trees, onTreeClick, onCameraClick }: OSMTreeMapProps) => {
   const [isLoadingLocation, setIsLoadingLocation] = useState(true);
   const [address, setAddress] = useState<string>('');
   const [draggedTreeId, setDraggedTreeId] = useState<string | null>(null);
+  const { updateTree } = useTree();
 
   // Enhanced geolocation with better accuracy for Indian locations
   const getCurrentLocation = () => {
@@ -137,9 +140,27 @@ const OSMTreeMap = ({ trees, onTreeClick, onCameraClick }: OSMTreeMapProps) => {
     getCurrentLocation();
   };
 
-  const handleMarkerDragEnd = (tree: Tree, newPosition: L.LatLng) => {
+  const handleMarkerDragEnd = async (tree: Tree, event: any) => {
+    const newPosition = event.target.getLatLng();
     console.log(`Tree ${tree.name} dragged to:`, newPosition.lat, newPosition.lng);
-    // Here you would typically update the tree's location in your context/database
+    
+    // Generate new H3 index for the new location
+    const newH3Index = latLngToCell(newPosition.lat, newPosition.lng, 9);
+    
+    // Update the tree's location in the context
+    try {
+      await updateTree(tree.id, {
+        location: {
+          lat: newPosition.lat,
+          lng: newPosition.lng,
+          h3Index: newH3Index
+        }
+      });
+      console.log(`Tree ${tree.name} location updated with new H3: ${newH3Index}`);
+    } catch (error) {
+      console.error('Error updating tree location:', error);
+    }
+    
     setDraggedTreeId(null);
   };
 
@@ -171,7 +192,7 @@ const OSMTreeMap = ({ trees, onTreeClick, onCameraClick }: OSMTreeMapProps) => {
           
           <MapUpdater center={userLocation} />
           
-          {/* User location marker */}
+          {/* User location marker - NOT draggable */}
           <Marker position={userLocation} icon={createUserIcon()}>
             <Popup>
               <div className="text-center max-w-xs">
@@ -188,7 +209,7 @@ const OSMTreeMap = ({ trees, onTreeClick, onCameraClick }: OSMTreeMapProps) => {
             </Popup>
           </Marker>
 
-          {/* Tree markers - now draggable */}
+          {/* Tree markers - draggable */}
           {trees.map((tree) => (
             <Marker
               key={tree.id}
@@ -197,8 +218,11 @@ const OSMTreeMap = ({ trees, onTreeClick, onCameraClick }: OSMTreeMapProps) => {
               draggable={true}
               eventHandlers={{
                 click: () => onTreeClick(tree),
-                dragstart: () => setDraggedTreeId(tree.id),
-                dragend: (e) => handleMarkerDragEnd(tree, e.target.getLatLng())
+                dragstart: () => {
+                  setDraggedTreeId(tree.id);
+                  console.log(`Started dragging tree: ${tree.name}`);
+                },
+                dragend: (e) => handleMarkerDragEnd(tree, e)
               }}
             >
               <Popup>
@@ -207,6 +231,9 @@ const OSMTreeMap = ({ trees, onTreeClick, onCameraClick }: OSMTreeMapProps) => {
                   <p className="text-sm text-muted-foreground">{tree.scientificName}</p>
                   <p className="text-xs text-blue-600 capitalize">{tree.category} forestry</p>
                   <p className="text-xs text-muted-foreground">H3: {tree.location.h3Index}</p>
+                  <p className="text-xs text-gray-600">
+                    Lat: {tree.location.lat.toFixed(6)}, Lng: {tree.location.lng.toFixed(6)}
+                  </p>
                   {tree.measurements.height && (
                     <p className="text-xs">Height: {tree.measurements.height}m</p>
                   )}
@@ -216,7 +243,10 @@ const OSMTreeMap = ({ trees, onTreeClick, onCameraClick }: OSMTreeMapProps) => {
                   {tree.isVerified && (
                     <p className="text-xs text-green-600">✅ Verified</p>
                   )}
-                  <p className="text-xs text-orange-600">📍 Drag to adjust position</p>
+                  <p className="text-xs text-orange-600">📍 Drag to adjust tree position</p>
+                  {draggedTreeId === tree.id && (
+                    <p className="text-xs text-blue-600 font-semibold">🔄 Dragging...</p>
+                  )}
                 </div>
               </Popup>
             </Marker>
