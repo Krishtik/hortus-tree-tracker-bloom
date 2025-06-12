@@ -1,11 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-
-interface User {
-  id: string;
-  email: string;
-  name?: string;
-}
+import { authService, User, LoginRequest, RegisterRequest } from '@/services/authService';
 
 interface AuthContextType {
   user: User | null;
@@ -14,6 +9,7 @@ interface AuthContextType {
   signup: (email: string, password: string, name?: string) => Promise<void>;
   logout: () => void;
   loading: boolean;
+  refreshToken: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -31,37 +27,68 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check for stored authentication on app load
-    const storedUser = localStorage.getItem('krish_hortus_user');
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (error) {
-        console.error('Error parsing stored user:', error);
-        localStorage.removeItem('krish_hortus_user');
-      }
-    }
-    setLoading(false);
+    initializeAuth();
   }, []);
+
+  const initializeAuth = async () => {
+    setLoading(true);
+    
+    try {
+      // Check if token is valid
+      if (authService.isTokenValid()) {
+        // Try to get current user from API
+        try {
+          const currentUser = await authService.getCurrentUser();
+          setUser(currentUser);
+        } catch (error) {
+          console.error('Failed to get current user:', error);
+          // Try to refresh token
+          try {
+            const authResponse = await authService.refreshToken();
+            setUser(authResponse.user);
+          } catch (refreshError) {
+            console.error('Token refresh failed:', refreshError);
+            // Fallback to stored user for demo mode
+            const storedUser = authService.getStoredUser();
+            if (storedUser) {
+              setUser(storedUser);
+            }
+          }
+        }
+      } else {
+        // Fallback to stored user for demo mode
+        const storedUser = authService.getStoredUser();
+        if (storedUser) {
+          setUser(storedUser);
+        }
+      }
+    } catch (error) {
+      console.error('Auth initialization error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const login = async (email: string, password: string) => {
     setLoading(true);
     try {
-      // Simulate API call - in real app, this would call your Spring Boot backend
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // For demo purposes, create a user object
+      const authResponse = await authService.login({ email, password });
+      setUser(authResponse.user);
+    } catch (error) {
+      console.error('Login error:', error);
+      // Fallback for demo mode
       const userData = {
         id: Math.random().toString(36).substr(2, 9),
         email,
-        name: email.split('@')[0]
+        name: email.split('@')[0],
+        role: 'USER' as const,
+        isVerified: true,
+        createdAt: new Date().toISOString()
       };
       
       setUser(userData);
       localStorage.setItem('krish_hortus_user', JSON.stringify(userData));
-    } catch (error) {
-      console.error('Login error:', error);
-      throw new Error('Login failed. Please check your credentials.');
+      throw new Error('Backend not connected - using demo mode');
     } finally {
       setLoading(false);
     }
@@ -70,30 +97,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signup = async (email: string, password: string, name?: string) => {
     setLoading(true);
     try {
-      // Simulate API call - in real app, this would call your Spring Boot backend
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // For demo purposes, create a user object
+      const authResponse = await authService.register({ email, password, name: name || email.split('@')[0] });
+      setUser(authResponse.user);
+    } catch (error) {
+      console.error('Signup error:', error);
+      // Fallback for demo mode
       const userData = {
         id: Math.random().toString(36).substr(2, 9),
         email,
-        name: name || email.split('@')[0]
+        name: name || email.split('@')[0],
+        role: 'USER' as const,
+        isVerified: false,
+        createdAt: new Date().toISOString()
       };
       
       setUser(userData);
       localStorage.setItem('krish_hortus_user', JSON.stringify(userData));
-    } catch (error) {
-      console.error('Signup error:', error);
-      throw new Error('Signup failed. Please try again.');
+      throw new Error('Backend not connected - using demo mode');
     } finally {
       setLoading(false);
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      await authService.logout();
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
     setUser(null);
-    localStorage.removeItem('krish_hortus_user');
-    localStorage.removeItem('krish_hortus_plants');
+  };
+
+  const refreshToken = async () => {
+    try {
+      const authResponse = await authService.refreshToken();
+      setUser(authResponse.user);
+    } catch (error) {
+      console.error('Token refresh error:', error);
+      setUser(null);
+    }
   };
 
   const value = {
@@ -102,7 +144,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     login,
     signup,
     logout,
-    loading
+    loading,
+    refreshToken
   };
 
   return (

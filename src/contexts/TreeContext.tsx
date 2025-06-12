@@ -1,7 +1,9 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { latLngToCell } from 'h3-js';
 import { Tree, TreeFormData } from '@/types/tree';
 import { useAuth } from '@/contexts/AuthContext';
+import { treeService, TreeSearchParams } from '@/services/treeService';
 
 interface TreeContextType {
   trees: Tree[];
@@ -10,7 +12,9 @@ interface TreeContextType {
   updateTree: (id: string, updates: Partial<Tree>) => Promise<void>;
   deleteTree: (id: string) => Promise<void>;
   getTreesInArea: (h3Index: string) => Tree[];
+  searchTrees: (params: TreeSearchParams) => Promise<void>;
   loading: boolean;
+  error: string | null;
 }
 
 const TreeContext = createContext<TreeContextType | undefined>(undefined);
@@ -23,7 +27,7 @@ export const useTree = () => {
   return context;
 };
 
-// Sample trees for demonstration
+// Sample trees for demo mode
 const sampleTrees: Tree[] = [
   {
     id: 'sample-1',
@@ -118,41 +122,56 @@ const sampleTrees: Tree[] = [
 export const TreeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [trees, setTrees] = useState<Tree[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
 
   useEffect(() => {
-    // Load trees from localStorage and merge with sample data
-    const storedTrees = localStorage.getItem('krish_hortus_trees');
-    let existingTrees: Tree[] = [];
-    
-    if (storedTrees) {
-      try {
-        existingTrees = JSON.parse(storedTrees).map((tree: any) => ({
-          ...tree,
-          taggedAt: new Date(tree.taggedAt)
-        }));
-      } catch (error) {
-        console.error('Error parsing stored trees:', error);
-      }
-    }
-
-    // Merge sample trees with existing trees (avoid duplicates)
-    const allTrees = [...sampleTrees];
-    existingTrees.forEach(tree => {
-      if (!allTrees.find(t => t.id === tree.id)) {
-        allTrees.push(tree);
-      }
-    });
-
-    setTrees(allTrees);
-    console.log('Loaded trees:', allTrees.length);
+    loadTrees();
   }, []);
+
+  const loadTrees = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      // Try to load from backend
+      const treeResponse = await treeService.getAllTrees();
+      setTrees(treeResponse.trees);
+      console.log('Loaded trees from backend:', treeResponse.trees.length);
+    } catch (error) {
+      console.error('Failed to load trees from backend:', error);
+      // Fallback to localStorage and sample data
+      const fallbackTrees = await treeService.getFallbackTrees();
+      const allTrees = [...sampleTrees];
+      
+      fallbackTrees.forEach(tree => {
+        if (!allTrees.find(t => t.id === tree.id)) {
+          allTrees.push(tree);
+        }
+      });
+      
+      setTrees(allTrees);
+      console.log('Using fallback trees:', allTrees.length);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const addTree = async (treeData: TreeFormData, location: { lat: number; lng: number }) => {
     if (!user) throw new Error('User must be authenticated to add trees');
 
     setLoading(true);
+    setError(null);
+    
     try {
+      // Try to create tree via backend
+      const newTree = await treeService.createTree(treeData, location);
+      setTrees(prev => [...prev, newTree]);
+      console.log('Tree created via backend:', newTree.id);
+    } catch (error) {
+      console.error('Failed to create tree via backend:', error);
+      
+      // Fallback to localStorage
       const h3Index = latLngToCell(location.lat, location.lng, 9);
       
       const newTree: Tree = {
@@ -187,9 +206,7 @@ export const TreeProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const updatedTrees = [...trees, newTree];
       setTrees(updatedTrees);
       localStorage.setItem('krish_hortus_trees', JSON.stringify(updatedTrees));
-    } catch (error) {
-      console.error('Error adding tree:', error);
-      throw new Error('Failed to add tree. Please try again.');
+      console.log('Tree created in fallback mode:', newTree.id);
     } finally {
       setLoading(false);
     }
@@ -197,15 +214,23 @@ export const TreeProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const updateTree = async (id: string, updates: Partial<Tree>) => {
     setLoading(true);
+    setError(null);
+    
     try {
+      // Try to update via backend
+      const updatedTree = await treeService.updateTree(id, updates);
+      setTrees(prev => prev.map(tree => tree.id === id ? updatedTree : tree));
+      console.log('Tree updated via backend:', id);
+    } catch (error) {
+      console.error('Failed to update tree via backend:', error);
+      
+      // Fallback to localStorage
       const updatedTrees = trees.map(tree => 
         tree.id === id ? { ...tree, ...updates } : tree
       );
       setTrees(updatedTrees);
       localStorage.setItem('krish_hortus_trees', JSON.stringify(updatedTrees));
-    } catch (error) {
-      console.error('Error updating tree:', error);
-      throw new Error('Failed to update tree. Please try again.');
+      console.log('Tree updated in fallback mode:', id);
     } finally {
       setLoading(false);
     }
@@ -213,13 +238,37 @@ export const TreeProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const deleteTree = async (id: string) => {
     setLoading(true);
+    setError(null);
+    
     try {
+      // Try to delete via backend
+      await treeService.deleteTree(id);
+      setTrees(prev => prev.filter(tree => tree.id !== id));
+      console.log('Tree deleted via backend:', id);
+    } catch (error) {
+      console.error('Failed to delete tree via backend:', error);
+      
+      // Fallback to localStorage
       const updatedTrees = trees.filter(tree => tree.id !== id);
       setTrees(updatedTrees);
       localStorage.setItem('krish_hortus_trees', JSON.stringify(updatedTrees));
+      console.log('Tree deleted in fallback mode:', id);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const searchTrees = async (params: TreeSearchParams) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const treeResponse = await treeService.getAllTrees(params);
+      setTrees(treeResponse.trees);
+      console.log('Trees searched via backend:', treeResponse.trees.length);
     } catch (error) {
-      console.error('Error deleting tree:', error);
-      throw new Error('Failed to delete tree. Please try again.');
+      console.error('Failed to search trees via backend:', error);
+      setError('Failed to search trees');
     } finally {
       setLoading(false);
     }
@@ -238,7 +287,9 @@ export const TreeProvider: React.FC<{ children: React.ReactNode }> = ({ children
     updateTree,
     deleteTree,
     getTreesInArea,
-    loading
+    searchTrees,
+    loading,
+    error
   };
 
   return (
