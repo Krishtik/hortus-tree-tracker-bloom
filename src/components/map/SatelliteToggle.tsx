@@ -8,14 +8,20 @@ interface SatelliteToggleProps {
 
 const SatelliteToggle = ({ isSatelliteView, onToggle }: SatelliteToggleProps) => {
   return (
-    <div className="absolute top-4 right-20 z-10 md:top-6 md:right-24">
+    <div className="absolute top-24 right-6 z-20">
       <Button
         onClick={onToggle}
         variant={isSatelliteView ? "default" : "outline"}
         size="sm"
-        className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 shadow-lg border border-gray-200 dark:border-gray-600"
+        className={`rounded-2xl h-12 px-4 backdrop-blur-xl shadow-xl border-2 transition-all duration-300 hover:scale-105 ${
+          isSatelliteView 
+            ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white border-white/20 hover:from-blue-600 hover:to-indigo-600' 
+            : 'bg-white/90 dark:bg-gray-900/90 text-gray-700 dark:text-gray-300 border-gray-200/50 dark:border-gray-700/50 hover:bg-white dark:hover:bg-gray-900'
+        }`}
       >
-        {isSatelliteView ? "🗺️ Street" : "🛰️ Satellite"}
+        <span className="font-medium">
+          {isSatelliteView ? "🗺️ Street" : "🛰️ Satellite"}
+        </span>
       </Button>
     </div>
   );
