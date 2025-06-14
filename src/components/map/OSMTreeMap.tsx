@@ -1,6 +1,6 @@
 
-import { useEffect, useState } from 'react';
-import { MapContainer, TileLayer } from 'react-leaflet';
+import { useEffect, useState, useCallback } from 'react';
+import { MapContainer, TileLayer, useMapEvents } from 'react-leaflet';
 import * as L from 'leaflet';
 import { Tree } from '@/types/tree';
 import { latLngToCell } from 'h3-js';
@@ -10,6 +10,8 @@ import MapSettings from './MapSettings';
 import UserLocationMarker from './UserLocationMarker';
 import TreeMarker from './TreeMarker';
 import MapUpdater from './MapUpdater';
+import TreeForm from '@/components/tree/TreeForm';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import 'leaflet/dist/leaflet.css';
 
 // Fix marker icon issue with Leaflet
@@ -26,16 +28,28 @@ interface OSMTreeMapProps {
   onCameraClick: () => void;
 }
 
+// Component to handle map click events
+const MapClickHandler = ({ onMapClick }: { onMapClick: (lat: number, lng: number) => void }) => {
+  useMapEvents({
+    click: (e) => {
+      onMapClick(e.latlng.lat, e.latlng.lng);
+    },
+  });
+  return null;
+};
+
 const OSMTreeMap = ({ trees, onTreeClick, onCameraClick }: OSMTreeMapProps) => {
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [showTreeForm, setShowTreeForm] = useState(false);
+  const [clickedLocation, setClickedLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(true);
   const [address, setAddress] = useState<string>('');
   const [draggedTreeId, setDraggedTreeId] = useState<string | null>(null);
-  const { updateTree } = useTree();
+  const { updateTree, addTree } = useTree();
 
   // Enhanced geolocation with better accuracy for Indian locations
-  const getCurrentLocation = () => {
+  const getCurrentLocation = useCallback(() => {
     setIsLoadingLocation(true);
     
     if (navigator.geolocation) {
@@ -83,22 +97,18 @@ const OSMTreeMap = ({ trees, onTreeClick, onCameraClick }: OSMTreeMapProps) => {
       setAddress('Maharashtra, India (Geolocation not supported)');
       setIsLoadingLocation(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     console.log('OSMTreeMap loaded with trees:', trees.length);
     getCurrentLocation();
-  }, [trees]);
+  }, [trees, getCurrentLocation]);
 
   const handleLocateUser = () => {
     getCurrentLocation();
   };
 
-  const handleMarkerDragEnd = async (tree: Tree, event: any) => {
-    const newPosition = event.target.getLatLng();
-    const newLat = newPosition.lat;
-    const newLng = newPosition.lng;
-    
+  const handleMarkerDragEnd = async (tree: Tree, newLat: number, newLng: number) => {
     console.log(`Tree ${tree.name} dragged to: lat=${newLat}, lng=${newLng}`);
     
     try {
@@ -147,14 +157,26 @@ const OSMTreeMap = ({ trees, onTreeClick, onCameraClick }: OSMTreeMapProps) => {
       
     } catch (error) {
       console.error('Error updating tree location:', error);
-      
-      // Revert the marker position on error
-      event.target.setLatLng([tree.location.lat, tree.location.lng]);
-      
-      // Optionally show user feedback here
       alert('Failed to update tree location. Please try again.');
     } finally {
       setDraggedTreeId(null);
+    }
+  };
+
+  const handleMapClick = (lat: number, lng: number) => {
+    console.log('Map clicked at:', lat, lng);
+    setClickedLocation({ lat, lng });
+    setShowTreeForm(true);
+  };
+
+  const handleTreeFormSubmit = async (data: any, location: { lat: number; lng: number }) => {
+    try {
+      await addTree(data, location);
+      setShowTreeForm(false);
+      setClickedLocation(null);
+      console.log('Tree added successfully at clicked location');
+    } catch (error) {
+      console.error('Failed to add tree:', error);
     }
   };
 
@@ -185,12 +207,13 @@ const OSMTreeMap = ({ trees, onTreeClick, onCameraClick }: OSMTreeMapProps) => {
           />
           
           <MapUpdater center={userLocation} />
+          <MapClickHandler onMapClick={handleMapClick} />
           
           <UserLocationMarker position={userLocation} address={address} />
 
           {trees.map((tree) => (
             <TreeMarker
-              key={tree.id}
+              key={`tree-${tree.id}`}
               tree={tree}
               onTreeClick={onTreeClick}
               onDragEnd={handleMarkerDragEnd}
@@ -217,6 +240,21 @@ const OSMTreeMap = ({ trees, onTreeClick, onCameraClick }: OSMTreeMapProps) => {
         trees={trees}
         address={address}
       />
+
+      <Dialog open={showTreeForm} onOpenChange={setShowTreeForm}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          {clickedLocation && (
+            <TreeForm
+              onSubmit={handleTreeFormSubmit}
+              onClose={() => {
+                setShowTreeForm(false);
+                setClickedLocation(null);
+              }}
+              initialLocation={clickedLocation}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
