@@ -34,7 +34,7 @@ const MapClickHandler = ({ onMapClick }: { onMapClick: (lat: number, lng: number
   const map = useMap();
   
   useEffect(() => {
-    const handleClick = (e: L.LeafletMouseEvent) => {
+    const handleClick = (e: any) => {
       onMapClick(e.latlng.lat, e.latlng.lng);
     };
 
