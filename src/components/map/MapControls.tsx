@@ -11,29 +11,29 @@ interface MapControlsProps {
 const MapControls = ({ onSettingsClick, onLocateClick, isLocating }: MapControlsProps) => {
   return (
     <>
-      {/* Locate User FAB - Right bottom */}
+      {/* Locate User FAB - Modern floating design */}
       <Button
         onClick={onLocateClick}
         size="sm"
         variant="outline"
         disabled={isLocating}
-        className="fixed bottom-24 right-6 z-20 w-14 h-14 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-2xl transition-all duration-300 hover:scale-110 border-2 border-gray-200/50 dark:border-gray-700/50 hover:bg-white dark:hover:bg-gray-900 rounded-xl"
+        className="fixed bottom-28 right-6 z-20 w-14 h-14 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl shadow-xl border border-emerald-200/50 dark:border-emerald-700/50 transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-2xl group"
       >
         {isLocating ? (
           <div className="animate-spin rounded-full h-5 w-5 border-2 border-emerald-500 border-t-transparent"></div>
         ) : (
-          <Locate className="h-5 w-5 text-gray-700 dark:text-gray-300" />
+          <Locate className="h-5 w-5 text-emerald-600 dark:text-emerald-400 group-hover:text-emerald-700 dark:group-hover:text-emerald-300 transition-colors" />
         )}
       </Button>
 
-      {/* Settings FAB - Top left */}
+      {/* Settings FAB - Modern floating design */}
       <Button
         onClick={onSettingsClick}
         size="sm"
         variant="outline"
-        className="fixed top-24 left-6 z-20 w-12 h-12 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-xl transition-all duration-300 hover:scale-110 border-2 border-gray-200/50 dark:border-gray-700/50 hover:bg-white dark:hover:bg-gray-900 rounded-xl"
+        className="fixed top-24 left-6 z-20 w-12 h-12 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl shadow-xl border border-gray-200/50 dark:border-gray-700/50 transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-2xl group"
       >
-        <Settings className="h-4 w-4 text-gray-700 dark:text-gray-300" />
+        <Settings className="h-4 w-4 text-gray-600 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
       </Button>
     </>
   );

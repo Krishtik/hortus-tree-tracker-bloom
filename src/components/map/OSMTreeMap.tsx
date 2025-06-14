@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useCallback } from 'react';
 import { MapContainer, TileLayer } from 'react-leaflet';
 import * as L from 'leaflet';
@@ -250,7 +249,6 @@ const OSMTreeMap = ({ trees, onTreeClick, onCameraClick }: OSMTreeMapProps) => {
       />
 
       <MapControls
-        onCameraClick={onCameraClick}
         onSettingsClick={() => setShowSettings(true)}
         onLocateClick={handleLocateUser}
         isLocating={isLoadingLocation}
