@@ -60,7 +60,6 @@ const OSMTreeMap = ({ trees, onTreeClick, onCameraClick }: OSMTreeMapProps) => {
     };
   }, [mapInstance]);
 
-  // Enhanced geolocation with better accuracy for Indian locations
   const getCurrentLocation = useCallback(() => {
     setIsLoadingLocation(true);
     
@@ -73,7 +72,6 @@ const OSMTreeMap = ({ trees, onTreeClick, onCameraClick }: OSMTreeMapProps) => {
           const newLocation: [number, number] = [latitude, longitude];
           setUserLocation(newLocation);
           
-          // Reverse geocoding to get address
           try {
             const response = await fetch(
               `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`
@@ -91,7 +89,6 @@ const OSMTreeMap = ({ trees, onTreeClick, onCameraClick }: OSMTreeMapProps) => {
         },
         (error) => {
           console.error('Enhanced geolocation error:', error);
-          // Fallback to Maharashtra center instead of Delhi
           const maharashtraCenter: [number, number] = [19.7515, 75.7139];
           setUserLocation(maharashtraCenter);
           setAddress('Maharashtra, India (Approximate)');
@@ -104,7 +101,6 @@ const OSMTreeMap = ({ trees, onTreeClick, onCameraClick }: OSMTreeMapProps) => {
         }
       );
     } else {
-      // Default to Maharashtra center
       setUserLocation([19.7515, 75.7139]);
       setAddress('Maharashtra, India (Geolocation not supported)');
       setIsLoadingLocation(false);
@@ -124,28 +120,22 @@ const OSMTreeMap = ({ trees, onTreeClick, onCameraClick }: OSMTreeMapProps) => {
     console.log(`Tree ${tree.name} dragged to: lat=${newLat}, lng=${newLng}`);
     
     try {
-      // Generate new H3 index for the new location with resolution 15 for maximum precision
       const newH3Index = latLngToCell(newLat, newLng, 15);
       console.log(`Generated new H3 index: ${newH3Index}`);
       
-      // Create the update object with the new location
       const locationUpdate = {
         location: {
           lat: newLat,
           lng: newLng,
           h3Index: newH3Index,
-          address: tree.location.address // Keep existing address or update if needed
+          address: tree.location.address
         }
       };
       
       console.log('Updating tree with:', locationUpdate);
-      
-      // Update the tree's location in the context
       await updateTree(tree.id, locationUpdate);
-      
       console.log(`Successfully updated tree ${tree.name} location. New H3: ${newH3Index}`);
       
-      // Optional: Get reverse geocoded address for the new location
       try {
         const response = await fetch(
           `https://nominatim.openstreetmap.org/reverse?format=json&lat=${newLat}&lon=${newLng}&zoom=18&addressdetails=1`
@@ -153,7 +143,6 @@ const OSMTreeMap = ({ trees, onTreeClick, onCameraClick }: OSMTreeMapProps) => {
         const geoData = await response.json();
         
         if (geoData.display_name) {
-          // Update with the new address as well
           await updateTree(tree.id, {
             location: {
               ...locationUpdate.location,
@@ -164,7 +153,6 @@ const OSMTreeMap = ({ trees, onTreeClick, onCameraClick }: OSMTreeMapProps) => {
         }
       } catch (geoError) {
         console.warn('Failed to get reverse geocoded address:', geoError);
-        // Continue without address update - not critical
       }
       
     } catch (error) {
@@ -228,7 +216,7 @@ const OSMTreeMap = ({ trees, onTreeClick, onCameraClick }: OSMTreeMapProps) => {
           zoom={15}
           style={{ height: '100%', width: '100%' }}
           className="z-0"
-          whenCreated={setMapInstance}
+          ref={setMapInstance}
         >
           <TileLayer
             url={isSatelliteView 
