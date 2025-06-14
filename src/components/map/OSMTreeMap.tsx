@@ -1,19 +1,20 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { MapContainer, TileLayer } from 'react-leaflet';
-import { useMap } from 'react-leaflet';
 import * as L from 'leaflet';
 import { Tree } from '@/types/tree';
-import { latLngToCell } from 'h3-js';
 import { useTree } from '@/contexts/TreeContext';
 import MapControls from './MapControls';
 import MapSettings from './MapSettings';
 import UserLocationMarker from './UserLocationMarker';
 import TreeMarker from './TreeMarker';
 import MapUpdater from './MapUpdater';
+import MapClickHandler from './MapClickHandler';
+import LocationPopup from './LocationPopup';
+import SatelliteToggle from './SatelliteToggle';
 import TreeForm from '@/components/tree/TreeForm';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+import { latLngToCell } from 'h3-js';
 import 'leaflet/dist/leaflet.css';
 
 // Fix marker icon issue with Leaflet
@@ -30,33 +31,12 @@ interface OSMTreeMapProps {
   onCameraClick: () => void;
 }
 
-// Component to handle map click events
-const MapClickHandler = ({ onMapClick }: { onMapClick: (lat: number, lng: number) => void }) => {
-  const map = useMap();
-  
-  useEffect(() => {
-    const handleClick = (e: any) => {
-      // Get the clicked location coordinates
-      const { lat, lng } = e.latlng;
-      console.log('Map clicked at coordinates:', lat, lng);
-      onMapClick(lat, lng);
-    };
-
-    map.on('click', handleClick);
-    
-    return () => {
-      map.off('click', handleClick);
-    };
-  }, [map, onMapClick]);
-
-  return null;
-};
-
 const OSMTreeMap = ({ trees, onTreeClick, onCameraClick }: OSMTreeMapProps) => {
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [showTreeForm, setShowTreeForm] = useState(false);
   const [clickedLocation, setClickedLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [showLocationPopup, setShowLocationPopup] = useState(false);
   const [isLoadingLocation, setIsLoadingLocation] = useState(true);
   const [address, setAddress] = useState<string>('');
   const [draggedTreeId, setDraggedTreeId] = useState<string | null>(null);
@@ -178,32 +158,21 @@ const OSMTreeMap = ({ trees, onTreeClick, onCameraClick }: OSMTreeMapProps) => {
     }
   };
 
-  const handleMapClick = async (lat: number, lng: number) => {
+  const handleMapClick = (lat: number, lng: number) => {
     console.log('Map clicked at:', lat, lng);
-    
-    // Get reverse geocoded address for the clicked location
-    try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`
-      );
-      const geoData = await response.json();
-      const clickedAddress = geoData.display_name || `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-      
-      console.log('Clicked location address:', clickedAddress);
-      
-      // Show the clicked location info and open tree form
-      setClickedLocation({ lat, lng });
-      setShowTreeForm(true);
-      
-      // Optional: Show a temporary toast with the location info
-      console.log(`Location clicked: ${clickedAddress}`);
-      
-    } catch (error) {
-      console.error('Failed to get address for clicked location:', error);
-      // Still proceed with coordinates
-      setClickedLocation({ lat, lng });
-      setShowTreeForm(true);
-    }
+    setClickedLocation({ lat, lng });
+    setShowLocationPopup(true);
+  };
+
+  const handleLocationPopupClose = () => {
+    setShowLocationPopup(false);
+    setClickedLocation(null);
+  };
+
+  const handleTagTreeAtLocation = (location: { lat: number; lng: number }) => {
+    setShowLocationPopup(false);
+    setClickedLocation(location);
+    setShowTreeForm(true);
   };
 
   const handleTreeFormSubmit = async (data: any, location: { lat: number; lng: number }) => {
@@ -275,17 +244,10 @@ const OSMTreeMap = ({ trees, onTreeClick, onCameraClick }: OSMTreeMapProps) => {
         </MapContainer>
       </div>
 
-      {/* Satellite View Toggle Button */}
-      <div className="absolute top-4 right-4 z-10">
-        <Button
-          onClick={toggleSatelliteView}
-          variant={isSatelliteView ? "default" : "outline"}
-          size="sm"
-          className="bg-white/90 backdrop-blur-sm hover:bg-white"
-        >
-          {isSatelliteView ? "Street View" : "Satellite"}
-        </Button>
-      </div>
+      <SatelliteToggle 
+        isSatelliteView={isSatelliteView}
+        onToggle={toggleSatelliteView}
+      />
 
       <MapControls
         onCameraClick={onCameraClick}
@@ -299,6 +261,12 @@ const OSMTreeMap = ({ trees, onTreeClick, onCameraClick }: OSMTreeMapProps) => {
         onClose={() => setShowSettings(false)}
         trees={trees}
         address={address}
+      />
+
+      <LocationPopup
+        location={clickedLocation}
+        onClose={handleLocationPopupClose}
+        onTagTree={handleTagTreeAtLocation}
       />
 
       <Dialog open={showTreeForm} onOpenChange={setShowTreeForm}>
