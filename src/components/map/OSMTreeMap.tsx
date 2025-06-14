@@ -1,6 +1,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
-import { MapContainer, TileLayer, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer } from 'react-leaflet';
+import { useMap } from 'react-leaflet';
 import * as L from 'leaflet';
 import { Tree } from '@/types/tree';
 import { latLngToCell } from 'h3-js';
@@ -30,11 +31,20 @@ interface OSMTreeMapProps {
 
 // Component to handle map click events
 const MapClickHandler = ({ onMapClick }: { onMapClick: (lat: number, lng: number) => void }) => {
-  useMapEvents({
-    click: (e) => {
+  const map = useMap();
+  
+  useEffect(() => {
+    const handleClick = (e: L.LeafletMouseEvent) => {
       onMapClick(e.latlng.lat, e.latlng.lng);
-    },
-  });
+    };
+
+    map.on('click', handleClick);
+    
+    return () => {
+      map.off('click', handleClick);
+    };
+  }, [map, onMapClick]);
+
   return null;
 };
 
