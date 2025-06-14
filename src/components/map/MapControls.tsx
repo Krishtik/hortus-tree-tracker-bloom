@@ -12,16 +12,16 @@ interface MapControlsProps {
 const MapControls = ({ onCameraClick, onSettingsClick, onLocateClick, isLocating }: MapControlsProps) => {
   return (
     <>
-      {/* Enhanced Camera FAB - positioned to avoid satellite toggle */}
+      {/* Camera FAB - repositioned to left bottom */}
       <Button
         onClick={onCameraClick}
         size="lg"
-        className="fixed top-4 right-4 z-10 rounded-full w-14 h-14 bg-green-600 hover:bg-green-700 shadow-lg transition-all duration-200 hover:scale-105 dark:bg-green-700 dark:hover:bg-green-800 md:top-6 md:right-6"
+        className="fixed bottom-28 left-4 z-10 rounded-full w-14 h-14 bg-green-600 hover:bg-green-700 shadow-lg transition-all duration-200 hover:scale-105 dark:bg-green-700 dark:hover:bg-green-800 md:bottom-8 md:left-6"
       >
         <Camera className="h-6 w-6 text-white" />
       </Button>
 
-      {/* Enhanced Locate User FAB - better positioning */}
+      {/* Locate User FAB - moved to right bottom on map */}
       <Button
         onClick={onLocateClick}
         size="sm"
