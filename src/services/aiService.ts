@@ -1,4 +1,3 @@
-
 import { apiClient } from './apiClient';
 
 export interface TreeIdentificationResult {
@@ -20,6 +19,11 @@ export interface TreeIdentificationResult {
 
 class AIService {
   private geminiApiKey = 'AIzaSyBnsSB-nGMPjshldXgyfm9V5dvMLi8eFTQ';
+
+  setApiKey(apiKey: string) {
+    this.geminiApiKey = apiKey;
+    localStorage.setItem('ai_api_key', apiKey);
+  }
 
   async identifyTree(imageFile: File): Promise<TreeIdentificationResult> {
     try {
