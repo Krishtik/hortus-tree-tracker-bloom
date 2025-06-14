@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import * as L from 'leaflet';
@@ -142,26 +141,66 @@ const OSMTreeMap = ({ trees, onTreeClick, onCameraClick }: OSMTreeMapProps) => {
 
   const handleMarkerDragEnd = async (tree: Tree, event: any) => {
     const newPosition = event.target.getLatLng();
-    console.log(`Tree ${tree.name} dragged to:`, newPosition.lat, newPosition.lng);
+    const newLat = newPosition.lat;
+    const newLng = newPosition.lng;
     
-    // Generate new H3 index for the new location
-    const newH3Index = latLngToCell(newPosition.lat, newPosition.lng, 9);
+    console.log(`Tree ${tree.name} dragged to: lat=${newLat}, lng=${newLng}`);
     
-    // Update the tree's location in the context
     try {
-      await updateTree(tree.id, {
+      // Generate new H3 index for the new location with resolution 9
+      const newH3Index = latLngToCell(newLat, newLng, 9);
+      console.log(`Generated new H3 index: ${newH3Index}`);
+      
+      // Create the update object with the new location
+      const locationUpdate = {
         location: {
-          lat: newPosition.lat,
-          lng: newPosition.lng,
-          h3Index: newH3Index
+          lat: newLat,
+          lng: newLng,
+          h3Index: newH3Index,
+          address: tree.location.address // Keep existing address or update if needed
         }
-      });
-      console.log(`Tree ${tree.name} location updated with new H3: ${newH3Index}`);
+      };
+      
+      console.log('Updating tree with:', locationUpdate);
+      
+      // Update the tree's location in the context
+      await updateTree(tree.id, locationUpdate);
+      
+      console.log(`Successfully updated tree ${tree.name} location. New H3: ${newH3Index}`);
+      
+      // Optional: Get reverse geocoded address for the new location
+      try {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${newLat}&lon=${newLng}&zoom=18&addressdetails=1`
+        );
+        const geoData = await response.json();
+        
+        if (geoData.display_name) {
+          // Update with the new address as well
+          await updateTree(tree.id, {
+            location: {
+              ...locationUpdate.location,
+              address: geoData.display_name
+            }
+          });
+          console.log(`Updated address for tree ${tree.name}: ${geoData.display_name}`);
+        }
+      } catch (geoError) {
+        console.warn('Failed to get reverse geocoded address:', geoError);
+        // Continue without address update - not critical
+      }
+      
     } catch (error) {
       console.error('Error updating tree location:', error);
+      
+      // Revert the marker position on error
+      event.target.setLatLng([tree.location.lat, tree.location.lng]);
+      
+      // Optionally show user feedback here
+      alert('Failed to update tree location. Please try again.');
+    } finally {
+      setDraggedTreeId(null);
     }
-    
-    setDraggedTreeId(null);
   };
 
   if (!userLocation) {
@@ -212,7 +251,7 @@ const OSMTreeMap = ({ trees, onTreeClick, onCameraClick }: OSMTreeMapProps) => {
           {/* Tree markers - draggable */}
           {trees.map((tree) => (
             <Marker
-              key={tree.id}
+              key={`${tree.id}-${tree.location.lat}-${tree.location.lng}`} // Force re-render on location change
               position={[tree.location.lat, tree.location.lng]}
               icon={createTreeIcon(tree.category)}
               draggable={true}
