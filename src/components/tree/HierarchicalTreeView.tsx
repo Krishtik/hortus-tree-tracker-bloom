@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useTree } from '@/contexts/TreeContext';
 import { ChevronRight, ChevronDown, TreePine, Folder, MapPin } from 'lucide-react';
@@ -16,7 +15,11 @@ interface TreeNode {
   count?: number;
 }
 
-const HierarchicalTreeView = () => {
+interface HierarchicalTreeViewProps {
+  onNodeSelect?: (nodeId: string) => void;
+}
+
+const HierarchicalTreeView = ({ onNodeSelect }: HierarchicalTreeViewProps) => {
   const { trees } = useTree();
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
 
@@ -87,6 +90,7 @@ const HierarchicalTreeView = () => {
 
   const handleNodeSelect = (nodeId: string) => {
     setSelectedNodeId(nodeId);
+    onNodeSelect?.(nodeId);
   };
 
   const renderTreeNode = (node: TreeNode, level: number = 0) => {
