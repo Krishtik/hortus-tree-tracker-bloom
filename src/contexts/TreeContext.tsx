@@ -1,9 +1,9 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { latLngToCell } from 'h3-js';
 import { Tree, TreeFormData } from '@/types/tree';
 import { useAuth } from '@/contexts/AuthContext';
 import { treeService, TreeSearchParams } from '@/services/treeService';
+import { toast } from '@/hooks/use-toast';
 
 interface TreeContextType {
   trees: Tree[];
@@ -27,7 +27,7 @@ export const useTree = () => {
   return context;
 };
 
-// Sample trees for demo mode
+// Sample trees for demo mode with H3 resolution 15
 const sampleTrees: Tree[] = [
   {
     id: 'sample-1',
@@ -38,7 +38,7 @@ const sampleTrees: Tree[] = [
     location: {
       lat: 28.6139,
       lng: 77.2090,
-      h3Index: latLngToCell(28.6139, 77.2090, 9)
+      h3Index: latLngToCell(28.6139, 77.2090, 15)
     },
     measurements: {
       height: 15,
@@ -60,7 +60,7 @@ const sampleTrees: Tree[] = [
     location: {
       lat: 28.6129,
       lng: 77.2085,
-      h3Index: latLngToCell(28.6129, 77.2085, 9)
+      h3Index: latLngToCell(28.6129, 77.2085, 15)
     },
     measurements: {
       height: 12,
@@ -82,7 +82,7 @@ const sampleTrees: Tree[] = [
     location: {
       lat: 28.6149,
       lng: 77.2095,
-      h3Index: latLngToCell(28.6149, 77.2095, 9)
+      h3Index: latLngToCell(28.6149, 77.2095, 15)
     },
     measurements: {
       height: 2,
@@ -104,7 +104,7 @@ const sampleTrees: Tree[] = [
     location: {
       lat: 28.6135,
       lng: 77.2100,
-      h3Index: latLngToCell(28.6135, 77.2100, 9)
+      h3Index: latLngToCell(28.6135, 77.2100, 15)
     },
     measurements: {
       height: 25,
@@ -167,12 +167,19 @@ export const TreeProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Try to create tree via backend
       const newTree = await treeService.createTree(treeData, location);
       setTrees(prev => [...prev, newTree]);
+      
+      // Real-time notification for successful tree tagging
+      toast({
+        title: "Tree Tagged Successfully! 🌳",
+        description: `${treeData.name} has been tagged at H3: ${latLngToCell(location.lat, location.lng, 15).slice(0, 12)}...`,
+      });
+      
       console.log('Tree created via backend:', newTree.id);
     } catch (error) {
       console.error('Failed to create tree via backend:', error);
       
       // Fallback to localStorage
-      const h3Index = latLngToCell(location.lat, location.lng, 9);
+      const h3Index = latLngToCell(location.lat, location.lng, 15);
       
       const newTree: Tree = {
         id: Math.random().toString(36).substr(2, 9),
@@ -206,6 +213,13 @@ export const TreeProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const updatedTrees = [...trees, newTree];
       setTrees(updatedTrees);
       localStorage.setItem('krish_hortus_trees', JSON.stringify(updatedTrees));
+      
+      // Real-time notification for successful tree tagging
+      toast({
+        title: "Tree Tagged Successfully! 🌳",
+        description: `${treeData.name} has been tagged at H3: ${h3Index.slice(0, 12)}...`,
+      });
+      
       console.log('Tree created in fallback mode:', newTree.id);
     } finally {
       setLoading(false);
@@ -220,6 +234,13 @@ export const TreeProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Try to update via backend
       const updatedTree = await treeService.updateTree(id, updates);
       setTrees(prev => prev.map(tree => tree.id === id ? updatedTree : tree));
+      
+      // Real-time notification for tree updates
+      toast({
+        title: "Tree Updated! 📝",
+        description: `Tree information has been successfully updated.`,
+      });
+      
       console.log('Tree updated via backend:', id);
     } catch (error) {
       console.error('Failed to update tree via backend:', error);
@@ -230,6 +251,13 @@ export const TreeProvider: React.FC<{ children: React.ReactNode }> = ({ children
       );
       setTrees(updatedTrees);
       localStorage.setItem('krish_hortus_trees', JSON.stringify(updatedTrees));
+      
+      // Real-time notification for tree updates
+      toast({
+        title: "Tree Updated! 📝",
+        description: `Tree information has been successfully updated.`,
+      });
+      
       console.log('Tree updated in fallback mode:', id);
     } finally {
       setLoading(false);
