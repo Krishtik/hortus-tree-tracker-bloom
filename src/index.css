@@ -65,14 +65,26 @@
   * {
     @apply border-border;
   }
-  body {
+  
+  html, body {
     @apply bg-background text-foreground;
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100vw;
+  }
+  
+  #root {
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100vw;
   }
 }
 
 /* Leaflet marker cluster fixes */
 .leaflet-container {
   background: #f0f9ff;
+  width: 100% !important;
+  max-width: 100vw !important;
 }
 
 .custom-tree-marker {
@@ -83,6 +95,25 @@
 .user-location-marker {
   background: transparent !important;
   border: none !important;
+}
+
+/* Mobile responsive fixes */
+@media (max-width: 768px) {
+  .leaflet-container {
+    height: calc(100vh - 160px) !important;
+  }
+  
+  /* Prevent horizontal scrolling */
+  body {
+    overflow-x: hidden !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+  }
+  
+  /* Fix map container on mobile */
+  .leaflet-container .leaflet-control-container {
+    max-width: calc(100vw - 2rem);
+  }
 }
 
 /* Additional animations */
@@ -146,4 +177,19 @@
 
 .animate-fade-in {
   animation: fade-in 0.3s ease-out;
+}
+
+/* Modern card design with subtle shadows */
+.card {
+  @apply bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm;
+}
+
+/* Smooth transitions for interactive elements */
+.interactive-element {
+  @apply transition-all duration-300 ease-out;
+}
+
+/* Enhanced focus states for accessibility */
+.focus-enhanced:focus {
+  @apply outline-none ring-2 ring-emerald-500/50 ring-offset-2;
 }
