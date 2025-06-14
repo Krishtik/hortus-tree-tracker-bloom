@@ -21,32 +21,8 @@ interface Notification {
 }
 
 const NotificationModal = ({ isOpen, onClose, onUnreadCountChange }: NotificationModalProps) => {
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: '1',
-      title: 'Tree Verification Complete',
-      message: 'Your Neem tree submission has been verified by the community.',
-      type: 'success',
-      timestamp: new Date(Date.now() - 1000 * 60 * 30),
-      read: false
-    },
-    {
-      id: '2',
-      title: 'New Tree Species Detected',
-      message: 'AI has identified a rare species in your area - Butea monosperma.',
-      type: 'info',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
-      read: false
-    },
-    {
-      id: '3',
-      title: 'Weekly Progress Update',
-      message: 'You have tagged 5 trees this week! Keep up the great work.',
-      type: 'info',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24),
-      read: true
-    }
-  ]);
+  // Start with empty notifications - real-time notifications will be added via toast system
+  const [notifications, setNotifications] = useState<Notification[]>([]);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -109,6 +85,7 @@ const NotificationModal = ({ isOpen, onClose, onUnreadCountChange }: Notificatio
               <div className="text-center py-8 text-muted-foreground">
                 <Bell className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p>No notifications yet</p>
+                <p className="text-sm mt-2">Real-time notifications will appear here when you tag trees</p>
               </div>
             ) : (
               notifications.map((notification) => (

@@ -47,7 +47,8 @@ const LocationPopup = ({ location, onClose, onTagTree }: LocationPopupProps) => 
 
   if (!location) return null;
 
-  const h3Index = latLngToCell(location.lat, location.lng, 9);
+  // Use H3 resolution 15 for maximum precision (~0.895 m²)
+  const h3Index = latLngToCell(location.lat, location.lng, 15);
 
   return (
     <div className="fixed inset-0 z-50 bg-black/20" onClick={onClose}>
@@ -74,13 +75,19 @@ const LocationPopup = ({ location, onClose, onTagTree }: LocationPopupProps) => 
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Coordinates</p>
                   <p className="text-sm font-mono">
-                    {location.lat.toFixed(6)}, {location.lng.toFixed(6)}
+                    {location.lat.toFixed(8)}, {location.lng.toFixed(8)}
                   </p>
                 </div>
-                
-                <Badge variant="outline" className="w-fit">
-                  H3: {h3Index.slice(0, 12)}...
-                </Badge>
+              </div>
+              
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">H3 Index (Resolution 15)</p>
+                <p className="text-xs font-mono bg-muted p-2 rounded break-all">
+                  {h3Index}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Precision: ~0.895 m² area
+                </p>
               </div>
               
               <div>

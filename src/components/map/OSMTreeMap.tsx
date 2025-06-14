@@ -107,8 +107,8 @@ const OSMTreeMap = ({ trees, onTreeClick, onCameraClick }: OSMTreeMapProps) => {
     console.log(`Tree ${tree.name} dragged to: lat=${newLat}, lng=${newLng}`);
     
     try {
-      // Generate new H3 index for the new location with resolution 9
-      const newH3Index = latLngToCell(newLat, newLng, 9);
+      // Generate new H3 index for the new location with resolution 15 for maximum precision
+      const newH3Index = latLngToCell(newLat, newLng, 15);
       console.log(`Generated new H3 index: ${newH3Index}`);
       
       // Create the update object with the new location
@@ -218,8 +218,8 @@ const OSMTreeMap = ({ trees, onTreeClick, onCameraClick }: OSMTreeMapProps) => {
               : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             }
             attribution={isSatelliteView
-              ? '&copy; <a href="https://www.esri.com/">Esri</a> &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
-              : '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+              ? '© Esri'
+              : '© OSM'
             }
           />
           

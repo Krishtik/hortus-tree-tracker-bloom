@@ -50,13 +50,19 @@ const TreeMarker = ({ tree, onTreeClick, onDragEnd, isDragging, onDragStart }: T
       }}
     >
       <Popup>
-        <div className="space-y-2 min-w-[200px]">
+        <div className="space-y-2 min-w-[250px]">
           <h3 className="font-semibold text-green-800">{tree.name}</h3>
           <p className="text-sm text-muted-foreground">{tree.scientificName}</p>
           <p className="text-xs text-blue-600 capitalize">{tree.category} forestry</p>
-          <p className="text-xs text-muted-foreground">H3: {tree.location.h3Index}</p>
+          <div className="text-xs text-muted-foreground">
+            <p className="font-medium">H3 Index (Res. 15):</p>
+            <p className="font-mono bg-gray-100 p-1 rounded break-all text-xs">
+              {tree.location.h3Index}
+            </p>
+            <p className="text-xs text-green-600 mt-1">~0.895 m² precision</p>
+          </div>
           <p className="text-xs text-gray-600">
-            Lat: {tree.location.lat.toFixed(6)}, Lng: {tree.location.lng.toFixed(6)}
+            Lat: {tree.location.lat.toFixed(8)}, Lng: {tree.location.lng.toFixed(8)}
           </p>
           {tree.measurements.height && (
             <p className="text-xs">Height: {tree.measurements.height}m</p>
