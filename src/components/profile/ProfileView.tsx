@@ -36,7 +36,7 @@ const ProfileView = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-4 pb-24">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-4 pb-24 overflow-y-auto">
       <div className="max-w-4xl mx-auto space-y-6">
         
         {/* Profile Header */}
@@ -63,12 +63,6 @@ const ProfileView = () => {
                     </Badge>
                   ))}
                 </div>
-              </div>
-              
-              <div className="text-center">
-                <Button variant="outline" className="border-emerald-200 hover:bg-emerald-50 dark:border-emerald-800 dark:hover:bg-emerald-900/20">
-                  Edit Profile
-                </Button>
               </div>
             </div>
           </CardContent>

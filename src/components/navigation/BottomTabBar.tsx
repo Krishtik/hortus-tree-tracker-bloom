@@ -18,7 +18,7 @@ const BottomTabBar = ({ activeTab, onTabChange }: BottomTabBarProps) => {
     },
     { 
       id: 'log' as const, 
-      label: 'Trees', 
+      label: 'Log', 
       icon: FileText, 
       gradient: 'from-blue-500 to-indigo-500',
       hoverColor: 'hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400'
