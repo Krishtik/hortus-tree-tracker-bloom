@@ -21,49 +21,6 @@ const ModernLayout = () => {
     setSelectedTree(tree);
   };
 
-  // Sample hierarchical data
-  const hierarchicalData = [
-    {
-      id: '1',
-      name: 'Urban Forest Project',
-      type: 'folder' as const,
-      expanded: true,
-      tags: ['project', 'urban'],
-      children: [
-        {
-          id: '1-1',
-          name: 'Oak Trees',
-          type: 'folder' as const,
-          expanded: false,
-          children: [
-            { id: '1-1-1', name: 'White Oak #001', type: 'tree' as const, tags: ['mature', 'healthy'] },
-            { id: '1-1-2', name: 'Red Oak #002', type: 'tree' as const, tags: ['young', 'monitoring'] }
-          ]
-        },
-        {
-          id: '1-2',
-          name: 'Maple Trees',
-          type: 'folder' as const,
-          expanded: true,
-          children: [
-            { id: '1-2-1', name: 'Sugar Maple #003', type: 'tree' as const, tags: ['mature'] },
-            { id: '1-2-2', name: 'Norway Maple #004', type: 'tree' as const, tags: ['diseased'] }
-          ]
-        }
-      ]
-    },
-    {
-      id: '2',
-      name: 'Conservation Area',
-      type: 'folder' as const,
-      expanded: false,
-      tags: ['conservation'],
-      children: [
-        { id: '2-1', name: 'Pine Grove', type: 'folder' as const, children: [] }
-      ]
-    }
-  ];
-
   const renderContent = () => {
     switch (activeTab) {
       case 'home':
@@ -80,7 +37,6 @@ const ModernLayout = () => {
         return (
           <div className="h-full bg-gray-50 dark:bg-gray-900">
             <HierarchicalTreeView 
-              data={hierarchicalData}
               onNodeSelect={(nodeId) => console.log('Selected node:', nodeId)}
             />
           </div>

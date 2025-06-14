@@ -41,7 +41,7 @@ const OSMTreeMap = ({ trees, onTreeClick, onCameraClick, isSatelliteView = false
   const [isLoadingLocation, setIsLoadingLocation] = useState(true);
   const [address, setAddress] = useState<string>('');
   const [draggedTreeId, setDraggedTreeId] = useState<string | null>(null);
-  const mapRef = useRef<L.Map | null>(null);
+  const mapRef = useRef<any>(null);
   const { updateTree, addTree } = useTree();
 
   // Listen for navigation events from search
@@ -211,7 +211,7 @@ const OSMTreeMap = ({ trees, onTreeClick, onCameraClick, isSatelliteView = false
           zoom={15}
           style={{ height: '100%', width: '100%' }}
           className="z-0"
-          whenCreated={setMapInstance => mapRef.current = setMapInstance}
+          ref={mapRef}
         >
           <TileLayer
             url={isSatelliteView 
