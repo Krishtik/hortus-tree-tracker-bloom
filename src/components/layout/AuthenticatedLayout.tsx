@@ -41,7 +41,7 @@ const AuthenticatedLayout = () => {
     switch (activeTab) {
       case 'home':
         return (
-          <div className="h-full">
+          <div className="h-full relative">
             <OSMTreeMap
               trees={trees}
               onTreeClick={handleTreeClick}
@@ -54,31 +54,47 @@ const AuthenticatedLayout = () => {
         setActiveTab('home');
         return null;
       case 'log':
-        return <TreeLogView />;
+        return (
+          <div className="h-full bg-gradient-to-br from-slate-50 via-green-50/30 to-emerald-50/20 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+            <TreeLogView />
+          </div>
+        );
       case 'profile':
-        return <ProfileView />;
+        return (
+          <div className="h-full bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/20 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+            <ProfileView />
+          </div>
+        );
       default:
         return null;
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
-      {/* Enhanced Navigation - Cleaner */}
-      <EnhancedNavigation 
-        onNotificationClick={() => setShowNotifications(true)}
-        activeTab={activeTab}
-        onTabChange={handleTabChange}
-        unreadNotifications={unreadNotifications}
-        onLogPlantClick={handleCameraClick}
-      />
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-zinc-50 dark:from-gray-950 dark:via-gray-900 dark:to-slate-900 flex flex-col">
+      {/* Enhanced Navigation with glass morphism effect */}
+      <div className="relative z-50">
+        <EnhancedNavigation 
+          onNotificationClick={() => setShowNotifications(true)}
+          activeTab={activeTab}
+          onTabChange={handleTabChange}
+          unreadNotifications={unreadNotifications}
+          onLogPlantClick={handleCameraClick}
+        />
+      </div>
       
-      {/* Main Content - Full height for map */}
-      <main className={`flex-1 pb-20 md:pb-0 ${activeTab === 'home' ? 'md:h-[calc(100vh-3.5rem)]' : ''}`}>
-        {renderTabContent()}
+      {/* Main Content with smooth transitions */}
+      <main className={`flex-1 pb-20 md:pb-0 transition-all duration-300 ease-in-out ${
+        activeTab === 'home' 
+          ? 'md:h-[calc(100vh-4rem)]' 
+          : 'md:h-[calc(100vh-4rem)] overflow-y-auto'
+      }`}>
+        <div className="h-full">
+          {renderTabContent()}
+        </div>
       </main>
 
-      {/* Desktop Bottom Tab Bar - Only show on desktop and when on map */}
+      {/* Desktop Bottom Tab Bar with glass morphism */}
       {activeTab === 'home' && (
         <div className="hidden md:block">
           <BottomTabBar 
@@ -88,7 +104,7 @@ const AuthenticatedLayout = () => {
         </div>
       )}
 
-      {/* Mobile Bottom Navigation */}
+      {/* Mobile Bottom Navigation with enhanced styling */}
       <div className="md:hidden">
         <BottomNavigation 
           activeTab={activeTab}
@@ -96,7 +112,7 @@ const AuthenticatedLayout = () => {
         />
       </div>
 
-      {/* Modals */}
+      {/* Modals with improved animations */}
       <TreeScanModal 
         isOpen={showScanModal} 
         onClose={() => setShowScanModal(false)} 
