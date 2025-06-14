@@ -41,15 +41,15 @@ const OSMTreeMap = ({ trees, onTreeClick, onCameraClick, isSatelliteView = false
   const [isLoadingLocation, setIsLoadingLocation] = useState(true);
   const [address, setAddress] = useState<string>('');
   const [draggedTreeId, setDraggedTreeId] = useState<string | null>(null);
-  const mapRef = useRef<any>(null);
+  const [mapInstance, setMapInstance] = useState<any>(null);
   const { updateTree, addTree } = useTree();
 
   // Listen for navigation events from search
   useEffect(() => {
     const handleNavigation = (event: CustomEvent) => {
       const { lat, lng, zoom } = event.detail;
-      if (mapRef.current) {
-        mapRef.current.setView([lat, lng], zoom);
+      if (mapInstance) {
+        mapInstance.setView([lat, lng], zoom);
       }
     };
 
@@ -58,7 +58,7 @@ const OSMTreeMap = ({ trees, onTreeClick, onCameraClick, isSatelliteView = false
     return () => {
       window.removeEventListener('navigateToLocation', handleNavigation as EventListener);
     };
-  }, []);
+  }, [mapInstance]);
 
   const getCurrentLocation = useCallback(() => {
     setIsLoadingLocation(true);
@@ -211,7 +211,6 @@ const OSMTreeMap = ({ trees, onTreeClick, onCameraClick, isSatelliteView = false
           zoom={15}
           style={{ height: '100%', width: '100%' }}
           className="z-0"
-          ref={mapRef}
         >
           <TileLayer
             url={isSatelliteView 
@@ -224,7 +223,7 @@ const OSMTreeMap = ({ trees, onTreeClick, onCameraClick, isSatelliteView = false
             }
           />
           
-          <MapUpdater center={userLocation} />
+          <MapUpdater center={userLocation} mapInstance={mapInstance} setMapInstance={setMapInstance} />
           <MapClickHandler onMapClick={handleMapClick} />
           
           <UserLocationMarker position={userLocation} address={address} />
