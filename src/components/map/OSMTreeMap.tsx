@@ -206,12 +206,13 @@ const OSMTreeMap = ({ trees, onTreeClick, onCameraClick, isSatelliteView = false
 
   return (
     <div className="relative w-full h-full">
-      <div style={{ height: '100%', width: '100%' }}>
+      <div className="w-full h-full">
         <MapContainer
           center={userLocation}
           zoom={15}
           style={{ height: '100%', width: '100%' }}
           className="z-0"
+          zoomControl={false}
         >
           <TileLayer
             url={isSatelliteView 

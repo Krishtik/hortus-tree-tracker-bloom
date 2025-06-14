@@ -60,8 +60,8 @@ const AuthenticatedContent = () => {
       case 'home':
         return (
           <div className="relative h-full w-full">
-            {/* Full Screen Map - Extended to bottom nav */}
-            <div className="absolute inset-0 z-0" style={{ paddingBottom: '80px' }}>
+            {/* Full Screen Map - Extended to bottom nav with proper mobile handling */}
+            <div className="absolute inset-0 z-0 pb-20">
               <OSMTreeMap 
                 trees={trees} 
                 onTreeClick={handleTreeClick}
@@ -71,15 +71,15 @@ const AuthenticatedContent = () => {
               />
             </div>
             
-            {/* Floating Top Search Bar */}
-            <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-30 flex items-center space-x-2">
-              <div className="flex items-center bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 rounded-xl px-3 py-2">
+            {/* Floating Top Search Bar - Responsive positioning */}
+            <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-30 flex items-center space-x-2 px-4 w-full max-w-md">
+              <div className="flex items-center bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 rounded-xl px-3 py-2 flex-1">
                 <Input
                   placeholder="Search places..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                  className="w-48 border-0 bg-transparent focus:ring-0 text-sm"
+                  className="w-full border-0 bg-transparent focus:ring-0 text-sm"
                 />
                 <Button
                   variant="ghost"
@@ -100,14 +100,14 @@ const AuthenticatedContent = () => {
                 variant="outline"
                 size="sm"
                 onClick={() => setShowTreeView(!showTreeView)}
-                className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-xl"
+                className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-xl flex-shrink-0"
               >
-                <TreePine className="h-4 w-4 mr-2 text-green-600" />
-                <span className="text-sm font-medium">Log</span>
+                <TreePine className="h-4 w-4 mr-1 text-green-600 sm:mr-2" />
+                <span className="text-sm font-medium hidden sm:inline">Log</span>
               </Button>
             </div>
 
-            {/* Tree View Overlay */}
+            {/* Tree View Overlay - Responsive bottom spacing */}
             {showTreeView && (
               <div className="absolute top-20 left-4 right-4 bottom-24 z-20 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-200/50 dark:border-gray-700/50 overflow-hidden">
                 <div className="h-full overflow-y-auto">
@@ -127,13 +127,13 @@ const AuthenticatedContent = () => {
         );
       case 'profile':
         return (
-          <div className="h-full overflow-y-auto" style={{ paddingBottom: '80px' }}>
+          <div className="h-full overflow-y-auto pb-20">
             <ProfileView />
           </div>
         );
       default:
         return (
-          <div className="absolute inset-0 z-0" style={{ paddingBottom: '80px' }}>
+          <div className="absolute inset-0 z-0 pb-20">
             <OSMTreeMap 
               trees={trees} 
               onTreeClick={handleTreeClick}
@@ -152,8 +152,8 @@ const AuthenticatedContent = () => {
         {renderTabContent()}
       </div>
       
-      {/* Hovering Bottom Navigation */}
-      <div className="absolute bottom-0 left-0 right-0 z-40">
+      {/* Fixed Bottom Navigation */}
+      <div className="fixed bottom-0 left-0 right-0 z-40">
         <BottomTabBar 
           activeTab={activeTab} 
           onTabChange={setActiveTab}

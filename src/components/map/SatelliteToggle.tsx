@@ -13,7 +13,7 @@ const SatelliteToggle = ({ isSatelliteView, onToggle }: SatelliteToggleProps) =>
       onClick={onToggle}
       size="sm"
       variant="outline"
-      className="fixed top-6 right-20 z-30 w-12 h-12 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl shadow-xl border border-gray-200/50 dark:border-gray-700/50 transition-all duration-300 hover:scale-105 hover:shadow-2xl rounded-2xl group"
+      className="fixed top-20 right-4 z-30 w-12 h-12 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl shadow-xl border border-gray-200/50 dark:border-gray-700/50 transition-all duration-300 hover:scale-105 hover:shadow-2xl rounded-2xl group sm:top-6 sm:right-20"
       title={isSatelliteView ? 'Switch to Street View' : 'Switch to Satellite View'}
     >
       {isSatelliteView ? (
