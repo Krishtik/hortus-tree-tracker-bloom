@@ -13,6 +13,7 @@ import TreeMarker from './TreeMarker';
 import MapUpdater from './MapUpdater';
 import TreeForm from '@/components/tree/TreeForm';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import 'leaflet/dist/leaflet.css';
 
 // Fix marker icon issue with Leaflet
@@ -35,7 +36,10 @@ const MapClickHandler = ({ onMapClick }: { onMapClick: (lat: number, lng: number
   
   useEffect(() => {
     const handleClick = (e: any) => {
-      onMapClick(e.latlng.lat, e.latlng.lng);
+      // Get the clicked location coordinates
+      const { lat, lng } = e.latlng;
+      console.log('Map clicked at coordinates:', lat, lng);
+      onMapClick(lat, lng);
     };
 
     map.on('click', handleClick);
@@ -56,6 +60,7 @@ const OSMTreeMap = ({ trees, onTreeClick, onCameraClick }: OSMTreeMapProps) => {
   const [isLoadingLocation, setIsLoadingLocation] = useState(true);
   const [address, setAddress] = useState<string>('');
   const [draggedTreeId, setDraggedTreeId] = useState<string | null>(null);
+  const [isSatelliteView, setIsSatelliteView] = useState(false);
   const { updateTree, addTree } = useTree();
 
   // Enhanced geolocation with better accuracy for Indian locations
@@ -173,10 +178,32 @@ const OSMTreeMap = ({ trees, onTreeClick, onCameraClick }: OSMTreeMapProps) => {
     }
   };
 
-  const handleMapClick = (lat: number, lng: number) => {
+  const handleMapClick = async (lat: number, lng: number) => {
     console.log('Map clicked at:', lat, lng);
-    setClickedLocation({ lat, lng });
-    setShowTreeForm(true);
+    
+    // Get reverse geocoded address for the clicked location
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`
+      );
+      const geoData = await response.json();
+      const clickedAddress = geoData.display_name || `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+      
+      console.log('Clicked location address:', clickedAddress);
+      
+      // Show the clicked location info and open tree form
+      setClickedLocation({ lat, lng });
+      setShowTreeForm(true);
+      
+      // Optional: Show a temporary toast with the location info
+      console.log(`Location clicked: ${clickedAddress}`);
+      
+    } catch (error) {
+      console.error('Failed to get address for clicked location:', error);
+      // Still proceed with coordinates
+      setClickedLocation({ lat, lng });
+      setShowTreeForm(true);
+    }
   };
 
   const handleTreeFormSubmit = async (data: any, location: { lat: number; lng: number }) => {
@@ -188,6 +215,11 @@ const OSMTreeMap = ({ trees, onTreeClick, onCameraClick }: OSMTreeMapProps) => {
     } catch (error) {
       console.error('Failed to add tree:', error);
     }
+  };
+
+  const toggleSatelliteView = () => {
+    setIsSatelliteView(!isSatelliteView);
+    console.log('Toggling satellite view:', !isSatelliteView);
   };
 
   if (!userLocation) {
@@ -212,8 +244,14 @@ const OSMTreeMap = ({ trees, onTreeClick, onCameraClick }: OSMTreeMapProps) => {
           className="z-0 rounded-lg"
         >
           <TileLayer
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+            url={isSatelliteView 
+              ? "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+              : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            }
+            attribution={isSatelliteView
+              ? '&copy; <a href="https://www.esri.com/">Esri</a> &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+              : '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+            }
           />
           
           <MapUpdater center={userLocation} />
@@ -235,6 +273,18 @@ const OSMTreeMap = ({ trees, onTreeClick, onCameraClick }: OSMTreeMapProps) => {
             />
           ))}
         </MapContainer>
+      </div>
+
+      {/* Satellite View Toggle Button */}
+      <div className="absolute top-4 right-4 z-10">
+        <Button
+          onClick={toggleSatelliteView}
+          variant={isSatelliteView ? "default" : "outline"}
+          size="sm"
+          className="bg-white/90 backdrop-blur-sm hover:bg-white"
+        >
+          {isSatelliteView ? "Street View" : "Satellite"}
+        </Button>
       </div>
 
       <MapControls
