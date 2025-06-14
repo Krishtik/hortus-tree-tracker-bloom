@@ -51,13 +51,17 @@ const EnhancedNavigation = ({
             </div>
           </div>
 
-          {/* Desktop Navigation Tabs - Now includes Map/Home */}
+          {/* Desktop Navigation Tabs - Improved colors */}
           <div className="hidden md:flex items-center space-x-2">
             <Button
               variant={activeTab === 'home' ? 'default' : 'ghost'}
               size="sm"
               onClick={() => onTabChange?.('home')}
-              className="text-sm transition-colors duration-200"
+              className={`text-sm transition-colors duration-200 ${
+                activeTab === 'home' 
+                  ? 'bg-green-600 text-white hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800' 
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+              }`}
             >
               <TreePine className="h-4 w-4 mr-2" />
               Map
@@ -66,7 +70,11 @@ const EnhancedNavigation = ({
               variant={activeTab === 'log' ? 'default' : 'ghost'}
               size="sm"
               onClick={() => onTabChange?.('log')}
-              className="text-sm transition-colors duration-200"
+              className={`text-sm transition-colors duration-200 ${
+                activeTab === 'log' 
+                  ? 'bg-green-600 text-white hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800' 
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+              }`}
             >
               <FileText className="h-4 w-4 mr-2" />
               Tree Log
@@ -75,7 +83,11 @@ const EnhancedNavigation = ({
               variant={activeTab === 'profile' ? 'default' : 'ghost'}
               size="sm"
               onClick={() => onTabChange?.('profile')}
-              className="text-sm transition-colors duration-200"
+              className={`text-sm transition-colors duration-200 ${
+                activeTab === 'profile' 
+                  ? 'bg-green-600 text-white hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800' 
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+              }`}
             >
               <User className="h-4 w-4 mr-2" />
               Profile
@@ -90,7 +102,7 @@ const EnhancedNavigation = ({
                 onClick={onLogPlantClick}
                 variant="outline"
                 size="sm"
-                className="hidden md:flex border-border text-foreground hover:bg-accent hover:text-accent-foreground transition-colors duration-200"
+                className="hidden md:flex border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors duration-200"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Log Plant
@@ -99,7 +111,7 @@ const EnhancedNavigation = ({
 
             {/* User Info - Desktop */}
             {user && (
-              <div className="hidden md:block text-sm text-muted-foreground">
+              <div className="hidden md:block text-sm text-gray-600 dark:text-gray-400">
                 Welcome, {user.name || user.email}
               </div>
             )}
@@ -110,7 +122,7 @@ const EnhancedNavigation = ({
                 <Button 
                   variant="outline" 
                   size="sm"
-                  className="border-border text-foreground hover:bg-accent hover:text-accent-foreground transition-colors duration-200"
+                  className="border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200"
                 >
                   <span className="text-sm">
                     {theme === 'dark' ? '🌙' : '☀️'}
@@ -145,7 +157,7 @@ const EnhancedNavigation = ({
               variant="outline"
               size="sm"
               onClick={onNotificationClick}
-              className="relative border-border text-foreground hover:bg-accent hover:text-accent-foreground transition-colors duration-200"
+              className="relative border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200"
             >
               <Bell className="h-4 w-4" />
               {unreadNotifications > 0 && (
