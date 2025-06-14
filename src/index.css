@@ -84,3 +84,29 @@
   background: transparent !important;
   border: none !important;
 }
+
+/* Additional animations */
+@keyframes scale-in {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-scale-in {
+  animation: scale-in 0.2s ease-out;
+}
+
+/* Remove rounded corners globally */
+* {
+  border-radius: 0 !important;
+}
+
+/* Clean, minimal design with sharp corners */
+.card, .button, .input, .select {
+  border-radius: 0 !important;
+}
