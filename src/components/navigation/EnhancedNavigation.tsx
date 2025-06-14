@@ -1,9 +1,10 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Bell, ChevronDown, FileText, User } from 'lucide-react';
+import { Bell, ChevronDown, FileText, User, TreePine, LogOut, Plus } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useTheme } from 'next-themes';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,18 +17,21 @@ interface EnhancedNavigationProps {
   activeTab?: 'home' | 'scan' | 'log' | 'profile';
   onTabChange?: (tab: 'home' | 'scan' | 'log' | 'profile') => void;
   unreadNotifications?: number;
+  onLogPlantClick?: () => void;
 }
 
 const EnhancedNavigation = ({ 
   onNotificationClick, 
   activeTab = 'home',
   onTabChange,
-  unreadNotifications = 0
+  unreadNotifications = 0,
+  onLogPlantClick
 }: EnhancedNavigationProps) => {
   const { theme, setTheme } = useTheme();
+  const { logout, user } = useAuth();
 
   return (
-    <nav className="bg-background border-b border-border shadow-sm transition-colors duration-200">
+    <nav className="bg-background/95 backdrop-blur-md border-b border-border shadow-sm transition-colors duration-200 sticky top-0 z-40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo and Branding */}
@@ -37,7 +41,7 @@ const EnhancedNavigation = ({
                 <span className="text-white font-bold text-lg">🌳</span>
               </div>
               <div>
-                <h1 className="text-xl font-bold bg-gradient-to-r from-green-700 to-emerald-600 bg-clip-text text-transparent">
+                <h1 className="text-xl font-bold bg-gradient-to-r from-green-700 to-emerald-600 dark:from-green-400 dark:to-emerald-400 bg-clip-text text-transparent">
                   Krish Hortus
                 </h1>
                 <p className="text-xs text-muted-foreground">
@@ -47,13 +51,22 @@ const EnhancedNavigation = ({
             </div>
           </div>
 
-          {/* Desktop Navigation Tabs - Hidden on mobile */}
+          {/* Desktop Navigation Tabs - Now includes Map/Home */}
           <div className="hidden md:flex items-center space-x-2">
+            <Button
+              variant={activeTab === 'home' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => onTabChange?.('home')}
+              className="text-sm transition-colors duration-200"
+            >
+              <TreePine className="h-4 w-4 mr-2" />
+              Map
+            </Button>
             <Button
               variant={activeTab === 'log' ? 'default' : 'ghost'}
               size="sm"
               onClick={() => onTabChange?.('log')}
-              className="text-sm"
+              className="text-sm transition-colors duration-200"
             >
               <FileText className="h-4 w-4 mr-2" />
               Tree Log
@@ -62,7 +75,7 @@ const EnhancedNavigation = ({
               variant={activeTab === 'profile' ? 'default' : 'ghost'}
               size="sm"
               onClick={() => onTabChange?.('profile')}
-              className="text-sm"
+              className="text-sm transition-colors duration-200"
             >
               <User className="h-4 w-4 mr-2" />
               Profile
@@ -71,13 +84,33 @@ const EnhancedNavigation = ({
 
           {/* Right Side Actions */}
           <div className="flex items-center space-x-3">
+            {/* Log Plant Button - Desktop */}
+            {onLogPlantClick && (
+              <Button
+                onClick={onLogPlantClick}
+                variant="outline"
+                size="sm"
+                className="hidden md:flex border-border text-foreground hover:bg-accent hover:text-accent-foreground transition-colors duration-200"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Log Plant
+              </Button>
+            )}
+
+            {/* User Info - Desktop */}
+            {user && (
+              <div className="hidden md:block text-sm text-muted-foreground">
+                Welcome, {user.name || user.email}
+              </div>
+            )}
+
             {/* Theme Toggle */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button 
                   variant="outline" 
                   size="sm"
-                  className="border-border text-foreground hover:bg-accent"
+                  className="border-border text-foreground hover:bg-accent hover:text-accent-foreground transition-colors duration-200"
                 >
                   <span className="text-sm">
                     {theme === 'dark' ? '🌙' : '☀️'}
@@ -88,19 +121,19 @@ const EnhancedNavigation = ({
               <DropdownMenuContent className="bg-popover border-border">
                 <DropdownMenuItem 
                   onClick={() => setTheme('light')}
-                  className="text-foreground hover:bg-accent"
+                  className="text-foreground hover:bg-accent focus:bg-accent transition-colors duration-200"
                 >
                   ☀️ Light Mode
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={() => setTheme('dark')}
-                  className="text-foreground hover:bg-accent"
+                  className="text-foreground hover:bg-accent focus:bg-accent transition-colors duration-200"
                 >
                   🌙 Dark Mode
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={() => setTheme('system')}
-                  className="text-foreground hover:bg-accent"
+                  className="text-foreground hover:bg-accent focus:bg-accent transition-colors duration-200"
                 >
                   💻 System
                 </DropdownMenuItem>
@@ -112,7 +145,7 @@ const EnhancedNavigation = ({
               variant="outline"
               size="sm"
               onClick={onNotificationClick}
-              className="relative border-border text-foreground hover:bg-accent"
+              className="relative border-border text-foreground hover:bg-accent hover:text-accent-foreground transition-colors duration-200"
             >
               <Bell className="h-4 w-4" />
               {unreadNotifications > 0 && (
@@ -123,6 +156,17 @@ const EnhancedNavigation = ({
                   {unreadNotifications}
                 </Badge>
               )}
+            </Button>
+
+            {/* Logout Button - Desktop */}
+            <Button
+              onClick={logout}
+              variant="outline"
+              size="sm"
+              className="hidden md:flex border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors duration-200"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Logout
             </Button>
           </div>
         </div>
