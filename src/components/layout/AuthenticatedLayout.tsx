@@ -1,133 +1,125 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useTree } from '@/contexts/TreeContext';
-import EnhancedNavigation from '@/components/navigation/EnhancedNavigation';
+import { TreeProvider } from '@/contexts/TreeContext';
 import BottomTabBar from '@/components/navigation/BottomTabBar';
 import OSMTreeMap from '@/components/map/OSMTreeMap';
-import ProfileView from '@/components/profile/ProfileView';
 import TreeLogView from '@/components/tree/TreeLogView';
 import HierarchicalTreeView from '@/components/tree/HierarchicalTreeView';
+import ProfileView from '@/components/profile/ProfileView';
 import TreeDetailModal from '@/components/tree/TreeDetailModal';
-import NotificationModal from '@/components/notifications/NotificationModal';
 import { Tree } from '@/types/tree';
+import { useTree } from '@/contexts/TreeContext';
+import { Button } from '@/components/ui/button';
+import { FileText, TreePine } from 'lucide-react';
 
-const AuthenticatedLayout = () => {
-  const [activeTab, setActiveTab] = useState<'home' | 'log' | 'profile'>('home');
+const AuthenticatedContent = () => {
+  const [activeTab, setActiveTab] = useState('home');
   const [selectedTree, setSelectedTree] = useState<Tree | null>(null);
-  const [showNotifications, setShowNotifications] = useState(false);
+  const [showTreeView, setShowTreeView] = useState(false);
   const { trees } = useTree();
 
   const handleTreeClick = (tree: Tree) => {
     setSelectedTree(tree);
   };
 
-  // Sample hierarchical data for the tree view
-  const hierarchicalData = [
-    {
-      id: '1',
-      name: 'Urban Forest Project',
-      type: 'folder' as const,
-      expanded: true,
-      tags: ['project', 'urban'],
-      children: [
-        {
-          id: '1-1',
-          name: 'Oak Trees',
-          type: 'folder' as const,
-          expanded: false,
-          children: [
-            { id: '1-1-1', name: 'White Oak #001', type: 'tree' as const, tags: ['mature', 'healthy'] },
-            { id: '1-1-2', name: 'Red Oak #002', type: 'tree' as const, tags: ['young', 'monitoring'] }
-          ]
-        },
-        {
-          id: '1-2',
-          name: 'Maple Trees',
-          type: 'folder' as const,
-          expanded: true,
-          children: [
-            { id: '1-2-1', name: 'Sugar Maple #003', type: 'tree' as const, tags: ['mature'] },
-            { id: '1-2-2', name: 'Norway Maple #004', type: 'tree' as const, tags: ['diseased'] }
-          ]
-        }
-      ]
-    }
-  ];
-
-  const renderContent = () => {
+  const renderTabContent = () => {
     switch (activeTab) {
       case 'home':
         return (
-          <div className="h-full">
-            <OSMTreeMap
-              trees={trees}
+          <div className="relative h-full">
+            <OSMTreeMap 
+              trees={trees} 
               onTreeClick={handleTreeClick}
               onCameraClick={() => {}}
             />
+            
+            {/* Top Navigation Bar */}
+            <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-30 flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowTreeView(!showTreeView)}
+                className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-xl"
+              >
+                <TreePine className="h-4 w-4 mr-2 text-green-600" />
+                <span className="text-sm font-medium">Trees</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setActiveTab('log')}
+                className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-xl"
+              >
+                <FileText className="h-4 w-4 mr-2 text-blue-600" />
+                <span className="text-sm font-medium">Log</span>
+              </Button>
+            </div>
+
+            {/* Tree View Overlay */}
+            {showTreeView && (
+              <div className="absolute top-20 left-4 right-4 bottom-4 z-20 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <HierarchicalTreeView />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowTreeView(false)}
+                  className="absolute top-4 right-4 bg-white/95 dark:bg-gray-900/95"
+                >
+                  Close
+                </Button>
+              </div>
+            )}
           </div>
         );
       case 'log':
-        return (
-          <div className="h-full bg-gray-50 dark:bg-gray-900">
-            <HierarchicalTreeView 
-              data={hierarchicalData}
-              onNodeSelect={(nodeId) => console.log('Selected node:', nodeId)}
-            />
-          </div>
-        );
+        return <TreeLogView />;
       case 'profile':
-        return (
-          <div className="h-full bg-gray-50 dark:bg-gray-900">
-            <ProfileView />
-          </div>
-        );
+        return <ProfileView />;
       default:
         return (
-          <div className="h-full">
-            <OSMTreeMap
-              trees={trees}
-              onTreeClick={handleTreeClick}
-              onCameraClick={() => {}}
-            />
-          </div>
+          <OSMTreeMap 
+            trees={trees} 
+            onTreeClick={handleTreeClick}
+            onCameraClick={() => {}}
+          />
         );
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col overflow-x-hidden">
-      <EnhancedNavigation 
-        onNotificationClick={() => setShowNotifications(true)}
-        activeTab={activeTab}
-        onTabChange={(tab) => setActiveTab(tab as 'home' | 'log' | 'profile')}
-        unreadNotifications={0}
-        onLogPlantClick={() => setActiveTab('log')}
-      />
+    <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-900 overflow-hidden">
+      <div className="flex-1 relative">
+        {renderTabContent()}
+      </div>
       
-      <main className="flex-1 overflow-hidden pb-20 w-full">
-        {renderContent()}
-      </main>
-
       <BottomTabBar 
-        activeTab={activeTab}
-        onTabChange={(tab) => setActiveTab(tab)}
+        activeTab={activeTab} 
+        onTabChange={setActiveTab}
       />
 
       {selectedTree && (
         <TreeDetailModal
           tree={selectedTree}
-          isOpen={!!selectedTree}
+          isOpen={true}
           onClose={() => setSelectedTree(null)}
         />
       )}
-
-      <NotificationModal
-        isOpen={showNotifications}
-        onClose={() => setShowNotifications(false)}
-        onUnreadCountChange={() => {}}
-      />
     </div>
+  );
+};
+
+const AuthenticatedLayout = () => {
+  const { user } = useAuth();
+
+  if (!user) {
+    return null;
+  }
+
+  return (
+    <TreeProvider>
+      <AuthenticatedContent />
+    </TreeProvider>
   );
 };
 

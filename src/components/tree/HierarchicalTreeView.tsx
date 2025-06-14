@@ -1,10 +1,11 @@
 
-import { useState } from 'react';
-import { ChevronDown, ChevronRight, Plus, Minus, Search, Filter, Tag } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { ChevronDown, ChevronRight, Search, Filter, Tag, TreePine, Users, Building, Sprout } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useTree } from '@/contexts/TreeContext';
 
 interface TreeNode {
   id: string;
@@ -14,19 +15,69 @@ interface TreeNode {
   tags?: string[];
   expanded?: boolean;
   selected?: boolean;
+  category?: string;
+  scientificName?: string;
+  isVerified?: boolean;
+  isAIGenerated?: boolean;
 }
 
 interface HierarchicalTreeViewProps {
-  data: TreeNode[];
   onNodeSelect?: (nodeId: string) => void;
   onBulkAction?: (nodeIds: string[], action: string) => void;
 }
 
-const HierarchicalTreeView = ({ data, onNodeSelect, onBulkAction }: HierarchicalTreeViewProps) => {
-  const [treeData, setTreeData] = useState<TreeNode[]>(data);
+const HierarchicalTreeView = ({ onNodeSelect, onBulkAction }: HierarchicalTreeViewProps) => {
+  const { trees } = useTree();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedNodes, setSelectedNodes] = useState<Set<string>>(new Set());
   const [showBulkActions, setShowBulkActions] = useState(false);
+
+  // Transform real tree data into hierarchical structure
+  const treeData = useMemo(() => {
+    const categoryIcons = {
+      farm: TreePine,
+      community: Users,
+      nursery: Sprout
+    };
+
+    const categories = trees.reduce((acc, tree) => {
+      if (!acc[tree.category]) {
+        acc[tree.category] = [];
+      }
+      acc[tree.category].push(tree);
+      return acc;
+    }, {} as Record<string, typeof trees>);
+
+    return Object.entries(categories).map(([category, categoryTrees]) => ({
+      id: `category-${category}`,
+      name: `${category.charAt(0).toUpperCase() + category.slice(1)} Forestry (${categoryTrees.length})`,
+      type: 'folder' as const,
+      expanded: true,
+      category,
+      children: categoryTrees.map(tree => ({
+        id: tree.id,
+        name: tree.name,
+        type: 'tree' as const,
+        scientificName: tree.scientificName,
+        category: tree.category,
+        isVerified: tree.isVerified,
+        isAIGenerated: tree.isAIGenerated,
+        tags: [
+          tree.category,
+          ...(tree.isVerified ? ['verified'] : []),
+          ...(tree.isAIGenerated ? ['ai-generated'] : []),
+          ...(tree.localName ? ['local-name'] : [])
+        ]
+      }))
+    }));
+  }, [trees]);
+
+  const [hierarchicalData, setHierarchicalData] = useState<TreeNode[]>(treeData);
+
+  // Update hierarchical data when trees change
+  useMemo(() => {
+    setHierarchicalData(treeData);
+  }, [treeData]);
 
   const toggleNode = (nodeId: string) => {
     const updateNode = (nodes: TreeNode[]): TreeNode[] => {
@@ -40,7 +91,7 @@ const HierarchicalTreeView = ({ data, onNodeSelect, onBulkAction }: Hierarchical
         return node;
       });
     };
-    setTreeData(updateNode(treeData));
+    setHierarchicalData(updateNode(hierarchicalData));
   };
 
   const toggleSelection = (nodeId: string) => {
@@ -54,10 +105,44 @@ const HierarchicalTreeView = ({ data, onNodeSelect, onBulkAction }: Hierarchical
     setShowBulkActions(newSelected.size > 0);
   };
 
+  const filteredData = useMemo(() => {
+    if (!searchTerm) return hierarchicalData;
+    
+    const filterNode = (node: TreeNode): TreeNode | null => {
+      const matchesSearch = node.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           node.scientificName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           node.tags?.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
+      
+      if (node.children) {
+        const filteredChildren = node.children.map(filterNode).filter(Boolean) as TreeNode[];
+        if (filteredChildren.length > 0 || matchesSearch) {
+          return {
+            ...node,
+            children: filteredChildren,
+            expanded: true
+          };
+        }
+      }
+      
+      return matchesSearch ? node : null;
+    };
+    
+    return hierarchicalData.map(filterNode).filter(Boolean) as TreeNode[];
+  }, [hierarchicalData, searchTerm]);
+
   const renderNode = (node: TreeNode, level: number = 0) => {
     const hasChildren = node.children && node.children.length > 0;
     const isExpanded = node.expanded;
     const isSelected = selectedNodes.has(node.id);
+
+    const getCategoryIcon = (category?: string) => {
+      if (category === 'farm') return TreePine;
+      if (category === 'community') return Users;
+      if (category === 'nursery') return Sprout;
+      return Building;
+    };
+
+    const Icon = node.type === 'folder' ? getCategoryIcon(node.category) : TreePine;
 
     return (
       <div key={node.id} className="w-full">
@@ -89,22 +174,38 @@ const HierarchicalTreeView = ({ data, onNodeSelect, onBulkAction }: Hierarchical
           )}
           
           <div className="flex-1 flex items-center space-x-3">
-            <div className={`w-3 h-3 rounded-full ${
-              node.type === 'folder' ? 'bg-blue-500' : 
-              node.type === 'tree' ? 'bg-green-500' : 'bg-purple-500'
+            <Icon className={`h-4 w-4 ${
+              node.category === 'farm' ? 'text-emerald-500' :
+              node.category === 'community' ? 'text-blue-500' :
+              node.category === 'nursery' ? 'text-red-500' : 'text-gray-500'
             }`} />
             
-            <span className="font-medium text-gray-900 dark:text-gray-100">
-              {node.name}
-            </span>
+            <div className="flex-1">
+              <span className="font-medium text-gray-900 dark:text-gray-100">
+                {node.name}
+              </span>
+              {node.scientificName && (
+                <p className="text-xs text-gray-600 dark:text-gray-400 italic">
+                  {node.scientificName}
+                </p>
+              )}
+            </div>
             
             {node.tags && (
               <div className="flex space-x-1">
-                {node.tags.map(tag => (
-                  <Badge key={tag} variant="secondary" className="text-xs">
-                    {tag}
+                {node.isVerified && (
+                  <Badge variant="default" className="text-xs bg-green-500 text-white">
+                    ✓
                   </Badge>
-                ))}
+                )}
+                {node.isAIGenerated && (
+                  <Badge variant="outline" className="text-xs text-purple-600 border-purple-300">
+                    🤖
+                  </Badge>
+                )}
+                <Badge variant="secondary" className="text-xs capitalize">
+                  {node.category}
+                </Badge>
               </div>
             )}
           </div>
@@ -127,7 +228,7 @@ const HierarchicalTreeView = ({ data, onNodeSelect, onBulkAction }: Hierarchical
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
-              placeholder="Search trees and plants..."
+              placeholder="Search trees, scientific names, categories..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 border-gray-300 dark:border-gray-600"
@@ -153,11 +254,30 @@ const HierarchicalTreeView = ({ data, onNodeSelect, onBulkAction }: Hierarchical
             </Button>
           </div>
         )}
+
+        {/* Statistics Summary */}
+        <div className="mt-3 text-sm text-gray-600 dark:text-gray-400">
+          <p>Total: {trees.length} trees | Showing: {filteredData.reduce((acc, cat) => acc + (cat.children?.length || 0), 0)} results</p>
+        </div>
       </div>
       
       {/* Tree Content */}
       <div className="flex-1 overflow-y-auto">
-        {treeData.map(node => renderNode(node))}
+        {filteredData.length === 0 ? (
+          <div className="p-8 text-center">
+            <TreePine className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-500 dark:text-gray-400">
+              {searchTerm ? 'No trees match your search' : 'No trees tagged yet'}
+            </p>
+            {!searchTerm && (
+              <p className="text-sm text-gray-400 mt-1">
+                Start by tagging trees on the map
+              </p>
+            )}
+          </div>
+        ) : (
+          filteredData.map(node => renderNode(node))
+        )}
       </div>
     </div>
   );
