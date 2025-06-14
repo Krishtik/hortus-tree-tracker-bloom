@@ -1,4 +1,3 @@
-
 import { Marker, Popup } from 'react-leaflet';
 import * as L from 'leaflet';
 import { Tree } from '@/types/tree';
@@ -107,8 +106,8 @@ const TreeMarker = ({ tree, onTreeClick, onDragEnd, isDragging, onDragStart }: T
         dragend: handleDragEnd
       }}
     >
-      <Popup className="custom-popup" maxWidth={320} minWidth={280}>
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-lg border-0 max-w-sm">
+      <Popup>
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-lg border-0 w-72">
           {/* Header */}
           <div className="flex items-start justify-between mb-3">
             <div className="flex-1 min-w-0">

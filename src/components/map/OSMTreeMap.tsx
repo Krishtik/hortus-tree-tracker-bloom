@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useCallback } from 'react';
 import { MapContainer, TileLayer } from 'react-leaflet';
 import * as L from 'leaflet';
@@ -212,7 +211,6 @@ const OSMTreeMap = ({ trees, onTreeClick, onCameraClick, isSatelliteView = false
           zoom={15}
           style={{ height: '100%', width: '100%' }}
           className="z-0"
-          zoomControl={false}
         >
           <TileLayer
             url={isSatelliteView 
