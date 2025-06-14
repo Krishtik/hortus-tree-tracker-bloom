@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTree } from '@/contexts/TreeContext';
 import BottomNavigation from '@/components/navigation/BottomNavigation';
+import BottomTabBar from '@/components/navigation/BottomTabBar';
 import EnhancedNavigation from '@/components/navigation/EnhancedNavigation';
 import OSMTreeMap from '@/components/map/OSMTreeMap';
 import TreeScanModal from '@/components/tree/TreeScanModal';
@@ -63,7 +64,7 @@ const AuthenticatedLayout = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
-      {/* Enhanced Navigation */}
+      {/* Enhanced Navigation - Cleaner */}
       <EnhancedNavigation 
         onNotificationClick={() => setShowNotifications(true)}
         activeTab={activeTab}
@@ -72,12 +73,22 @@ const AuthenticatedLayout = () => {
         onLogPlantClick={handleCameraClick}
       />
       
-      {/* Main Content - extend height on desktop for map */}
-      <main className={`flex-1 pb-20 md:pb-0 ${activeTab === 'home' ? 'md:h-[calc(100vh-4rem)]' : ''}`}>
+      {/* Main Content - Full height for map */}
+      <main className={`flex-1 pb-20 md:pb-0 ${activeTab === 'home' ? 'md:h-[calc(100vh-3.5rem)]' : ''}`}>
         {renderTabContent()}
       </main>
 
-      {/* Bottom Navigation - Mobile only */}
+      {/* Desktop Bottom Tab Bar - Only show on desktop and when on map */}
+      {activeTab === 'home' && (
+        <div className="hidden md:block">
+          <BottomTabBar 
+            activeTab={activeTab}
+            onTabChange={handleTabChange}
+          />
+        </div>
+      )}
+
+      {/* Mobile Bottom Navigation */}
       <div className="md:hidden">
         <BottomNavigation 
           activeTab={activeTab}
