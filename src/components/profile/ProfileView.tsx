@@ -44,7 +44,6 @@ const ProfileView = () => {
           <CardContent className="pt-6">
             <div className="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-6">
               <Avatar className="h-24 w-24 ring-4 ring-emerald-200 dark:ring-emerald-800">
-                <AvatarImage src={user?.avatar} />
                 <AvatarFallback className="bg-gradient-to-br from-emerald-400 to-green-500 text-white text-xl font-bold">
                   {user?.name?.charAt(0) || 'U'}
                 </AvatarFallback>
