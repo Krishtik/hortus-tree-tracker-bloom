@@ -6,7 +6,7 @@ import { Tree } from '@/types/tree';
 interface TreeMarkerProps {
   tree: Tree;
   onTreeClick: (tree: Tree) => void;
-  onDragEnd: (tree: Tree, event: any) => void;
+  onDragEnd: (tree: Tree, newLat: number, newLng: number) => void;
   isDragging: boolean;
   onDragStart: () => void;
 }
@@ -32,16 +32,21 @@ const createTreeIcon = (category: string) => {
 };
 
 const TreeMarker = ({ tree, onTreeClick, onDragEnd, isDragging, onDragStart }: TreeMarkerProps) => {
+  const handleDragEnd = (e: any) => {
+    const newPosition = e.target.getLatLng();
+    onDragEnd(tree, newPosition.lat, newPosition.lng);
+  };
+
   return (
     <Marker
-      key={`${tree.id}-${tree.location.lat}-${tree.location.lng}`}
+      key={`tree-${tree.id}-${tree.location.lat}-${tree.location.lng}-${tree.location.h3Index}`}
       position={[tree.location.lat, tree.location.lng]}
       icon={createTreeIcon(tree.category)}
       draggable={true}
       eventHandlers={{
         click: () => onTreeClick(tree),
         dragstart: onDragStart,
-        dragend: (e) => onDragEnd(tree, e)
+        dragend: handleDragEnd
       }}
     >
       <Popup>
