@@ -1,12 +1,15 @@
-import { useEffect, useRef, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+
+import { useEffect, useState } from 'react';
+import { MapContainer, TileLayer } from 'react-leaflet';
 import * as L from 'leaflet';
-import { Camera, Settings, Locate } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Tree } from '@/types/tree';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { latLngToCell } from 'h3-js';
 import { useTree } from '@/contexts/TreeContext';
+import MapControls from './MapControls';
+import MapSettings from './MapSettings';
+import UserLocationMarker from './UserLocationMarker';
+import TreeMarker from './TreeMarker';
+import MapUpdater from './MapUpdater';
 import 'leaflet/dist/leaflet.css';
 
 // Fix marker icon issue with Leaflet
@@ -22,54 +25,6 @@ interface OSMTreeMapProps {
   onTreeClick: (tree: Tree) => void;
   onCameraClick: () => void;
 }
-
-// Custom icon creator for different tree categories
-const createTreeIcon = (category: string) => {
-  const iconUrls = {
-    farm: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
-    community: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
-    nursery: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png'
-  };
-  
-  const iconUrl = iconUrls[category as keyof typeof iconUrls] || iconUrls.farm;
-  
-  return L.icon({
-    iconUrl: iconUrl,
-    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41]
-  });
-};
-
-// User location icon
-const createUserIcon = () => {
-  return L.icon({
-    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-    iconSize: [20, 32],
-    iconAnchor: [10, 32],
-    popupAnchor: [0, -32],
-    shadowSize: [32, 32]
-  });
-};
-
-// Component to handle map updates with smooth animation
-const MapUpdater = ({ center }: { center: [number, number] | null }) => {
-  const map = useMap();
-  
-  useEffect(() => {
-    if (center) {
-      map.flyTo(center, 15, {
-        animate: true,
-        duration: 1.5
-      });
-    }
-  }, [center, map]);
-  
-  return null;
-};
 
 const OSMTreeMap = ({ trees, onTreeClick, onCameraClick }: OSMTreeMapProps) => {
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
@@ -231,142 +186,37 @@ const OSMTreeMap = ({ trees, onTreeClick, onCameraClick }: OSMTreeMapProps) => {
           
           <MapUpdater center={userLocation} />
           
-          {/* User location marker - NOT draggable */}
-          <Marker position={userLocation} icon={createUserIcon()}>
-            <Popup>
-              <div className="text-center max-w-xs">
-                <strong className="text-green-800">Your Location</strong>
-                <br />
-                <small className="text-xs text-muted-foreground">
-                  {address}
-                </small>
-                <br />
-                <small className="text-xs">Lat: {userLocation[0].toFixed(6)}</small>
-                <br />
-                <small className="text-xs">Lng: {userLocation[1].toFixed(6)}</small>
-              </div>
-            </Popup>
-          </Marker>
+          <UserLocationMarker position={userLocation} address={address} />
 
-          {/* Tree markers - draggable */}
           {trees.map((tree) => (
-            <Marker
-              key={`${tree.id}-${tree.location.lat}-${tree.location.lng}`} // Force re-render on location change
-              position={[tree.location.lat, tree.location.lng]}
-              icon={createTreeIcon(tree.category)}
-              draggable={true}
-              eventHandlers={{
-                click: () => onTreeClick(tree),
-                dragstart: () => {
-                  setDraggedTreeId(tree.id);
-                  console.log(`Started dragging tree: ${tree.name}`);
-                },
-                dragend: (e) => handleMarkerDragEnd(tree, e)
+            <TreeMarker
+              key={tree.id}
+              tree={tree}
+              onTreeClick={onTreeClick}
+              onDragEnd={handleMarkerDragEnd}
+              isDragging={draggedTreeId === tree.id}
+              onDragStart={() => {
+                setDraggedTreeId(tree.id);
+                console.log(`Started dragging tree: ${tree.name}`);
               }}
-            >
-              <Popup>
-                <div className="space-y-2 min-w-[200px]">
-                  <h3 className="font-semibold text-green-800">{tree.name}</h3>
-                  <p className="text-sm text-muted-foreground">{tree.scientificName}</p>
-                  <p className="text-xs text-blue-600 capitalize">{tree.category} forestry</p>
-                  <p className="text-xs text-muted-foreground">H3: {tree.location.h3Index}</p>
-                  <p className="text-xs text-gray-600">
-                    Lat: {tree.location.lat.toFixed(6)}, Lng: {tree.location.lng.toFixed(6)}
-                  </p>
-                  {tree.measurements.height && (
-                    <p className="text-xs">Height: {tree.measurements.height}m</p>
-                  )}
-                  {tree.isAIGenerated && (
-                    <p className="text-xs text-purple-600">🤖 AI Generated</p>
-                  )}
-                  {tree.isVerified && (
-                    <p className="text-xs text-green-600">✅ Verified</p>
-                  )}
-                  <p className="text-xs text-orange-600">📍 Drag to adjust tree position</p>
-                  {draggedTreeId === tree.id && (
-                    <p className="text-xs text-blue-600 font-semibold">🔄 Dragging...</p>
-                  )}
-                </div>
-              </Popup>
-            </Marker>
+            />
           ))}
         </MapContainer>
       </div>
 
-      {/* Enhanced Camera FAB */}
-      <Button
-        onClick={onCameraClick}
-        size="lg"
-        className="fixed top-20 right-4 z-10 rounded-full w-14 h-14 bg-green-600 hover:bg-green-700 shadow-lg transition-all duration-200 hover:scale-105 dark:bg-green-700 dark:hover:bg-green-800"
-      >
-        <Camera className="h-6 w-6 text-white" />
-      </Button>
+      <MapControls
+        onCameraClick={onCameraClick}
+        onSettingsClick={() => setShowSettings(true)}
+        onLocateClick={handleLocateUser}
+        isLocating={isLoadingLocation}
+      />
 
-      {/* Enhanced Locate User FAB */}
-      <Button
-        onClick={handleLocateUser}
-        size="sm"
-        variant="outline"
-        disabled={isLoadingLocation}
-        className="fixed bottom-24 right-4 z-10 rounded-full w-12 h-12 bg-white dark:bg-gray-800 shadow-lg transition-all duration-200 hover:scale-105"
-      >
-        {isLoadingLocation ? (
-          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600"></div>
-        ) : (
-          <Locate className="h-4 w-4 text-gray-700 dark:text-gray-300" />
-        )}
-      </Button>
-
-      {/* Settings FAB */}
-      <Button
-        onClick={() => setShowSettings(true)}
-        size="sm"
-        variant="outline"
-        className="fixed top-20 left-4 z-10 rounded-full w-10 h-10 bg-white dark:bg-gray-800 shadow-lg transition-all duration-200 hover:scale-105"
-      >
-        <Settings className="h-4 w-4 text-gray-700 dark:text-gray-300" />
-      </Button>
-
-      <Dialog open={showSettings} onOpenChange={setShowSettings}>
-        <DialogContent className="dark:bg-gray-800 dark:border-gray-700">
-          <DialogHeader>
-            <DialogTitle className="dark:text-white">Map Settings</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="text-center">
-              <p className="text-sm text-muted-foreground dark:text-gray-300">
-                Using OpenStreetMap tiles
-              </p>
-              <p className="text-xs text-muted-foreground mt-2 dark:text-gray-400">
-                No API key required • Free and open source
-              </p>
-            </div>
-            
-            <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
-              <p className="text-xs font-medium text-green-800 dark:text-green-300 mb-1">Current Location</p>
-              <p className="text-xs text-green-700 dark:text-green-400">{address}</p>
-            </div>
-
-            <div className="space-y-2 text-sm">
-              <div className="flex items-center space-x-2">
-                <div className="w-4 h-4 bg-green-500 rounded-full"></div>
-                <span className="dark:text-gray-300">Farm Forestry ({trees.filter(t => t.category === 'farm').length})</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-4 h-4 bg-blue-500 rounded-full"></div>
-                <span className="dark:text-gray-300">Community Forestry ({trees.filter(t => t.category === 'community').length})</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-4 h-4 bg-red-500 rounded-full"></div>
-                <span className="dark:text-gray-300">Nursery Forestry ({trees.filter(t => t.category === 'nursery').length})</span>
-              </div>
-            </div>
-            <div className="text-center text-xs text-muted-foreground dark:text-gray-400">
-              Total Trees: {trees.length}
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <MapSettings
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+        trees={trees}
+        address={address}
+      />
     </div>
   );
 };
