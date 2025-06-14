@@ -1,282 +1,202 @@
 
-import { useState, useMemo } from 'react';
-import { ChevronDown, ChevronRight, Search, Filter, Tag, TreePine, Users, Building, Sprout } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
+import { useState } from 'react';
 import { useTree } from '@/contexts/TreeContext';
+import { ChevronRight, ChevronDown, TreePine, Folder, MapPin } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Tree } from '@/types/tree';
 
 interface TreeNode {
   id: string;
   name: string;
-  type: 'folder' | 'tree' | 'plant';
+  type: 'folder' | 'tree';
   children?: TreeNode[];
-  tags?: string[];
   expanded?: boolean;
-  selected?: boolean;
-  category?: string;
-  scientificName?: string;
-  isVerified?: boolean;
-  isAIGenerated?: boolean;
+  tree?: Tree;
+  count?: number;
 }
 
-interface HierarchicalTreeViewProps {
-  onNodeSelect?: (nodeId: string) => void;
-  onBulkAction?: (nodeIds: string[], action: string) => void;
-}
-
-const HierarchicalTreeView = ({ onNodeSelect, onBulkAction }: HierarchicalTreeViewProps) => {
+const HierarchicalTreeView = () => {
   const { trees } = useTree();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedNodes, setSelectedNodes] = useState<Set<string>>(new Set());
-  const [showBulkActions, setShowBulkActions] = useState(false);
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
 
-  // Transform real tree data into hierarchical structure
-  const treeData = useMemo(() => {
-    const categoryIcons = {
-      farm: TreePine,
-      community: Users,
-      nursery: Sprout
-    };
-
-    const categories = trees.reduce((acc, tree) => {
-      if (!acc[tree.category]) {
-        acc[tree.category] = [];
+  // Group trees by category to create hierarchy
+  const createTreeHierarchy = (): TreeNode[] => {
+    const categoryGroups: Record<string, Tree[]> = {};
+    
+    trees.forEach(tree => {
+      if (!categoryGroups[tree.category]) {
+        categoryGroups[tree.category] = [];
       }
-      acc[tree.category].push(tree);
-      return acc;
-    }, {} as Record<string, typeof trees>);
+      categoryGroups[tree.category].push(tree);
+    });
 
-    return Object.entries(categories).map(([category, categoryTrees]) => ({
+    return Object.entries(categoryGroups).map(([category, categoryTrees]) => ({
       id: `category-${category}`,
-      name: `${category.charAt(0).toUpperCase() + category.slice(1)} Forestry (${categoryTrees.length})`,
+      name: getCategoryDisplayName(category),
       type: 'folder' as const,
-      expanded: true,
-      category,
+      expanded: false,
+      count: categoryTrees.length,
       children: categoryTrees.map(tree => ({
-        id: tree.id,
+        id: `tree-${tree.id}`,
         name: tree.name,
         type: 'tree' as const,
-        scientificName: tree.scientificName,
-        category: tree.category,
-        isVerified: tree.isVerified,
-        isAIGenerated: tree.isAIGenerated,
-        tags: [
-          tree.category,
-          ...(tree.isVerified ? ['verified'] : []),
-          ...(tree.isAIGenerated ? ['ai-generated'] : []),
-          ...(tree.localName ? ['local-name'] : [])
-        ]
+        tree: tree
       }))
     }));
-  }, [trees]);
+  };
 
-  const [hierarchicalData, setHierarchicalData] = useState<TreeNode[]>(treeData);
+  const getCategoryDisplayName = (category: string) => {
+    const categoryNames = {
+      farm: 'Farm Forestry',
+      community: 'Community Forestry',
+      nursery: 'Nursery',
+      extension: 'Extension Forestry',
+      ngo: 'NGO Partnership'
+    };
+    return categoryNames[category as keyof typeof categoryNames] || category;
+  };
 
-  // Update hierarchical data when trees change
-  useMemo(() => {
-    setHierarchicalData(treeData);
-  }, [treeData]);
+  const getCategoryColor = (category: string) => {
+    const colors = {
+      farm: 'emerald',
+      community: 'blue',
+      nursery: 'red',
+      extension: 'violet',
+      ngo: 'orange'
+    };
+    return colors[category as keyof typeof colors] || 'gray';
+  };
+
+  const [treeData, setTreeData] = useState<TreeNode[]>(createTreeHierarchy());
+
+  // Update tree data when trees change
+  useState(() => {
+    setTreeData(createTreeHierarchy());
+  });
 
   const toggleNode = (nodeId: string) => {
-    const updateNode = (nodes: TreeNode[]): TreeNode[] => {
-      return nodes.map(node => {
-        if (node.id === nodeId) {
-          return { ...node, expanded: !node.expanded };
-        }
-        if (node.children) {
-          return { ...node, children: updateNode(node.children) };
-        }
-        return node;
-      });
-    };
-    setHierarchicalData(updateNode(hierarchicalData));
+    setTreeData(prevData => 
+      prevData.map(node => 
+        node.id === nodeId 
+          ? { ...node, expanded: !node.expanded }
+          : node
+      )
+    );
   };
 
-  const toggleSelection = (nodeId: string) => {
-    const newSelected = new Set(selectedNodes);
-    if (newSelected.has(nodeId)) {
-      newSelected.delete(nodeId);
-    } else {
-      newSelected.add(nodeId);
-    }
-    setSelectedNodes(newSelected);
-    setShowBulkActions(newSelected.size > 0);
+  const handleNodeSelect = (nodeId: string) => {
+    setSelectedNodeId(nodeId);
   };
 
-  const filteredData = useMemo(() => {
-    if (!searchTerm) return hierarchicalData;
-    
-    const filterNode = (node: TreeNode): TreeNode | null => {
-      const matchesSearch = node.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           node.scientificName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           node.tags?.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
+  const renderTreeNode = (node: TreeNode, level: number = 0) => {
+    const isSelected = selectedNodeId === node.id;
+    const paddingLeft = level * 20 + 12;
+
+    if (node.type === 'folder') {
+      const categoryKey = node.name.toLowerCase().replace(/\s+/g, '');
+      const colorClass = getCategoryColor(categoryKey);
       
-      if (node.children) {
-        const filteredChildren = node.children.map(filterNode).filter(Boolean) as TreeNode[];
-        if (filteredChildren.length > 0 || matchesSearch) {
-          return {
-            ...node,
-            children: filteredChildren,
-            expanded: true
-          };
-        }
-      }
-      
-      return matchesSearch ? node : null;
-    };
-    
-    return hierarchicalData.map(filterNode).filter(Boolean) as TreeNode[];
-  }, [hierarchicalData, searchTerm]);
-
-  const renderNode = (node: TreeNode, level: number = 0) => {
-    const hasChildren = node.children && node.children.length > 0;
-    const isExpanded = node.expanded;
-    const isSelected = selectedNodes.has(node.id);
-
-    const getCategoryIcon = (category?: string) => {
-      if (category === 'farm') return TreePine;
-      if (category === 'community') return Users;
-      if (category === 'nursery') return Sprout;
-      return Building;
-    };
-
-    const Icon = node.type === 'folder' ? getCategoryIcon(node.category) : TreePine;
-
-    return (
-      <div key={node.id} className="w-full">
-        <div 
-          className={`flex items-center space-x-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all duration-200 cursor-pointer group ${
-            isSelected ? 'bg-emerald-50 dark:bg-emerald-900/20 border-l-4 border-emerald-500' : ''
-          }`}
-          style={{ paddingLeft: `${level * 24 + 12}px` }}
-        >
-          <Checkbox
-            checked={isSelected}
-            onCheckedChange={() => toggleSelection(node.id)}
-            className="opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-          />
-          
-          {hasChildren && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => toggleNode(node.id)}
-              className="w-6 h-6 p-0 hover:bg-gray-200 dark:hover:bg-gray-700"
-            >
-              {isExpanded ? (
-                <ChevronDown className="h-4 w-4" />
+      return (
+        <div key={node.id}>
+          <Button
+            variant="ghost"
+            className={`w-full justify-start text-left p-2 h-auto ${
+              isSelected ? 'bg-blue-50 dark:bg-blue-900/20' : 'hover:bg-gray-50 dark:hover:bg-gray-800'
+            }`}
+            style={{ paddingLeft: `${paddingLeft}px` }}
+            onClick={() => {
+              toggleNode(node.id);
+              handleNodeSelect(node.id);
+            }}
+          >
+            <div className="flex items-center space-x-2 w-full">
+              {node.expanded ? (
+                <ChevronDown className="h-4 w-4 text-gray-500" />
               ) : (
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight className="h-4 w-4 text-gray-500" />
               )}
-            </Button>
-          )}
-          
-          <div className="flex-1 flex items-center space-x-3">
-            <Icon className={`h-4 w-4 ${
-              node.category === 'farm' ? 'text-emerald-500' :
-              node.category === 'community' ? 'text-blue-500' :
-              node.category === 'nursery' ? 'text-red-500' : 'text-gray-500'
-            }`} />
-            
-            <div className="flex-1">
-              <span className="font-medium text-gray-900 dark:text-gray-100">
-                {node.name}
-              </span>
-              {node.scientificName && (
-                <p className="text-xs text-gray-600 dark:text-gray-400 italic">
-                  {node.scientificName}
-                </p>
-              )}
+              <Folder className="h-4 w-4 text-blue-600" />
+              <span className="font-medium flex-1">{node.name}</span>
+              <Badge 
+                variant="secondary" 
+                className={`text-xs bg-${colorClass}-100 text-${colorClass}-800 dark:bg-${colorClass}-900 dark:text-${colorClass}-100`}
+              >
+                {node.count}
+              </Badge>
             </div>
-            
-            {node.tags && (
-              <div className="flex space-x-1">
-                {node.isVerified && (
-                  <Badge variant="default" className="text-xs bg-green-500 text-white">
-                    ✓
-                  </Badge>
-                )}
-                {node.isAIGenerated && (
-                  <Badge variant="outline" className="text-xs text-purple-600 border-purple-300">
-                    🤖
-                  </Badge>
-                )}
-                <Badge variant="secondary" className="text-xs capitalize">
-                  {node.category}
-                </Badge>
-              </div>
+          </Button>
+          {node.expanded && node.children && (
+            <div>
+              {node.children.map(child => renderTreeNode(child, level + 1))}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // Tree node
+    const tree = node.tree!;
+    return (
+      <Button
+        key={node.id}
+        variant="ghost"
+        className={`w-full justify-start text-left p-2 h-auto ${
+          isSelected ? 'bg-green-50 dark:bg-green-900/20' : 'hover:bg-gray-50 dark:hover:bg-gray-800'
+        }`}
+        style={{ paddingLeft: `${paddingLeft}px` }}
+        onClick={() => handleNodeSelect(node.id)}
+      >
+        <div className="flex items-center space-x-2 w-full">
+          <TreePine className="h-4 w-4 text-green-600" />
+          <div className="flex-1 min-w-0">
+            <div className="font-medium text-sm truncate">{tree.name}</div>
+            <div className="text-xs text-gray-500 italic truncate">{tree.scientificName}</div>
+            <div className="flex items-center text-xs text-gray-400 mt-1">
+              <MapPin className="h-3 w-3 mr-1" />
+              <span>{tree.location.lat.toFixed(4)}, {tree.location.lng.toFixed(4)}</span>
+            </div>
+          </div>
+          <div className="flex flex-col items-end space-y-1">
+            {tree.isVerified && (
+              <Badge variant="default" className="bg-green-500 text-white text-xs">
+                ✓
+              </Badge>
+            )}
+            {tree.isAIGenerated && (
+              <Badge variant="outline" className="text-purple-600 border-purple-300 text-xs">
+                AI
+              </Badge>
             )}
           </div>
         </div>
-        
-        {hasChildren && isExpanded && (
-          <div className="animate-accordion-down">
-            {node.children!.map(child => renderNode(child, level + 1))}
-          </div>
-        )}
-      </div>
+      </Button>
     );
   };
 
   return (
-    <div className="h-full flex flex-col bg-white dark:bg-gray-900">
-      {/* Search and Filter Header */}
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 sticky top-0 z-10">
-        <div className="flex items-center space-x-3 mb-3">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="Search trees, scientific names, categories..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 border-gray-300 dark:border-gray-600"
-            />
-          </div>
-          <Button variant="outline" size="sm">
-            <Filter className="h-4 w-4 mr-2" />
-            Filter
-          </Button>
-        </div>
-        
-        {showBulkActions && (
-          <div className="flex items-center space-x-2 p-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg animate-fade-in">
-            <span className="text-sm text-emerald-700 dark:text-emerald-300">
-              {selectedNodes.size} items selected
-            </span>
-            <Button size="sm" variant="outline">
-              <Tag className="h-4 w-4 mr-1" />
-              Tag
-            </Button>
-            <Button size="sm" variant="outline">
-              Export
-            </Button>
-          </div>
-        )}
-
-        {/* Statistics Summary */}
-        <div className="mt-3 text-sm text-gray-600 dark:text-gray-400">
-          <p>Total: {trees.length} trees | Showing: {filteredData.reduce((acc, cat) => acc + (cat.children?.length || 0), 0)} results</p>
+    <div className="w-full h-full bg-white dark:bg-gray-900 rounded-lg">
+      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center space-x-2">
+          <TreePine className="h-5 w-5 text-green-600" />
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Tree Inventory</h2>
+          <Badge variant="secondary" className="ml-auto">
+            {trees.length} Total
+          </Badge>
         </div>
       </div>
       
-      {/* Tree Content */}
-      <div className="flex-1 overflow-y-auto">
-        {filteredData.length === 0 ? (
-          <div className="p-8 text-center">
-            <TreePine className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500 dark:text-gray-400">
-              {searchTerm ? 'No trees match your search' : 'No trees tagged yet'}
-            </p>
-            {!searchTerm && (
-              <p className="text-sm text-gray-400 mt-1">
-                Start by tagging trees on the map
-              </p>
-            )}
+      <div className="overflow-y-auto max-h-[calc(100vh-200px)]">
+        {treeData.length > 0 ? (
+          <div className="py-2">
+            {treeData.map(node => renderTreeNode(node))}
           </div>
         ) : (
-          filteredData.map(node => renderNode(node))
+          <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+            <TreePine className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <p className="text-lg font-medium mb-2">No trees logged yet</p>
+            <p className="text-sm">Start tagging trees on the map to build your inventory!</p>
+          </div>
         )}
       </div>
     </div>

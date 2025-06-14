@@ -26,6 +26,14 @@ const createTreeIcon = (category: string, isVerified: boolean = false) => {
     nursery: {
       color: '#dc2626', // red-600
       iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png'
+    },
+    extension: {
+      color: '#7c3aed', // violet-600
+      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-violet.png'
+    },
+    ngo: {
+      color: '#ea580c', // orange-600
+      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png'
     }
   };
   
@@ -68,7 +76,9 @@ const TreeMarker = ({ tree, onTreeClick, onDragEnd, isDragging, onDragStart }: T
     const categoryNames = {
       farm: 'Farm Forestry',
       community: 'Community Forestry',
-      nursery: 'Nursery'
+      nursery: 'Nursery',
+      extension: 'Extension Forestry',
+      ngo: 'NGO Partnership'
     };
     return categoryNames[category as keyof typeof categoryNames] || category;
   };
@@ -77,7 +87,9 @@ const TreeMarker = ({ tree, onTreeClick, onDragEnd, isDragging, onDragStart }: T
     const colors = {
       farm: 'emerald',
       community: 'blue',
-      nursery: 'red'
+      nursery: 'red',
+      extension: 'violet',
+      ngo: 'orange'
     };
     return colors[category as keyof typeof colors] || 'gray';
   };
@@ -94,7 +106,7 @@ const TreeMarker = ({ tree, onTreeClick, onDragEnd, isDragging, onDragStart }: T
         dragend: handleDragEnd
       }}
     >
-      <Popup className="custom-popup">
+      <Popup>
         <div className="space-y-3 min-w-[280px] p-2">
           <div className="flex items-start justify-between">
             <div className="flex-1">
