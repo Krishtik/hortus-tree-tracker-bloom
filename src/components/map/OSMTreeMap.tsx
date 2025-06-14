@@ -205,7 +205,7 @@ const OSMTreeMap = ({ trees, onTreeClick, onCameraClick }: OSMTreeMapProps) => {
 
   return (
     <div className="relative w-full h-full">
-      <div style={{ height: '70vh', width: '100%' }}>
+      <div style={{ height: '70vh', width: '100%' }} className="md:h-full">
         <MapContainer
           center={userLocation}
           zoom={15}

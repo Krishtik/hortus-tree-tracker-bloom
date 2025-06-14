@@ -72,8 +72,8 @@ const AuthenticatedLayout = () => {
         onLogPlantClick={handleCameraClick}
       />
       
-      {/* Main Content */}
-      <main className="flex-1 pb-20 md:pb-0">
+      {/* Main Content - extend height on desktop for map */}
+      <main className={`flex-1 pb-20 md:pb-0 ${activeTab === 'home' ? 'md:h-[calc(100vh-4rem)]' : ''}`}>
         {renderTabContent()}
       </main>
 
