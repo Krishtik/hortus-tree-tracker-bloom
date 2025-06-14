@@ -269,7 +269,7 @@ const OSMTreeMap = ({ trees, onTreeClick, onCameraClick, isSatelliteView = false
       />
 
       <Dialog open={showTreeForm} onOpenChange={setShowTreeForm}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto z-[9999]">
           {clickedLocation && (
             <TreeForm
               onSubmit={handleTreeFormSubmit}
