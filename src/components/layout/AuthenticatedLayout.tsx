@@ -4,8 +4,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { TreeProvider } from '@/contexts/TreeContext';
 import BottomTabBar from '@/components/navigation/BottomTabBar';
 import OSMTreeMap from '@/components/map/OSMTreeMap';
-import TreeLogView from '@/components/tree/TreeLogView';
-import HierarchicalTreeView from '@/components/tree/HierarchicalTreeView';
 import ProfileView from '@/components/profile/ProfileView';
 import TreeDetailModal from '@/components/tree/TreeDetailModal';
 import { Tree } from '@/types/tree';
@@ -13,13 +11,15 @@ import { useTree } from '@/contexts/TreeContext';
 import { Button } from '@/components/ui/button';
 import { Search, TreePine } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import HierarchicalTreeView from '@/components/tree/HierarchicalTreeView';
 
 const AuthenticatedContent = () => {
-  const [activeTab, setActiveTab] = useState<'home' | 'log' | 'profile'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'profile'>('home');
   const [selectedTree, setSelectedTree] = useState<Tree | null>(null);
   const [showTreeView, setShowTreeView] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
+  const [isSatelliteView, setIsSatelliteView] = useState(false);
   const { trees } = useTree();
 
   const handleTreeClick = (tree: Tree) => {
@@ -60,15 +60,18 @@ const AuthenticatedContent = () => {
       case 'home':
         return (
           <div className="relative h-full w-full">
+            {/* Full Screen Map */}
             <div className="absolute inset-0 z-0">
               <OSMTreeMap 
                 trees={trees} 
                 onTreeClick={handleTreeClick}
                 onCameraClick={() => {}}
+                isSatelliteView={isSatelliteView}
+                onSatelliteToggle={() => setIsSatelliteView(!isSatelliteView)}
               />
             </div>
             
-            {/* Floating Top Navigation Bar */}
+            {/* Floating Top Search Bar */}
             <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-30 flex items-center space-x-2">
               <div className="flex items-center bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 rounded-xl px-3 py-2">
                 <Input
@@ -100,7 +103,7 @@ const AuthenticatedContent = () => {
                 className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-xl"
               >
                 <TreePine className="h-4 w-4 mr-2 text-green-600" />
-                <span className="text-sm font-medium">Trees</span>
+                <span className="text-sm font-medium">Log</span>
               </Button>
             </div>
 
@@ -122,18 +125,8 @@ const AuthenticatedContent = () => {
             )}
           </div>
         );
-      case 'log':
-        return (
-          <div className="h-full bg-gray-50 dark:bg-gray-900">
-            <TreeLogView />
-          </div>
-        );
       case 'profile':
-        return (
-          <div className="h-full bg-gray-50 dark:bg-gray-900">
-            <ProfileView />
-          </div>
-        );
+        return <ProfileView />;
       default:
         return (
           <div className="absolute inset-0 z-0">
@@ -141,6 +134,8 @@ const AuthenticatedContent = () => {
               trees={trees} 
               onTreeClick={handleTreeClick}
               onCameraClick={() => {}}
+              isSatelliteView={isSatelliteView}
+              onSatelliteToggle={() => setIsSatelliteView(!isSatelliteView)}
             />
           </div>
         );
@@ -153,10 +148,13 @@ const AuthenticatedContent = () => {
         {renderTabContent()}
       </div>
       
-      <BottomTabBar 
-        activeTab={activeTab} 
-        onTabChange={setActiveTab}
-      />
+      {/* Hovering Bottom Navigation */}
+      <div className="relative z-40">
+        <BottomTabBar 
+          activeTab={activeTab} 
+          onTabChange={setActiveTab}
+        />
+      </div>
 
       {selectedTree && (
         <TreeDetailModal

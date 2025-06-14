@@ -1,5 +1,4 @@
-
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { MapContainer, TileLayer } from 'react-leaflet';
 import * as L from 'leaflet';
 import { Tree } from '@/types/tree';
@@ -29,9 +28,11 @@ interface OSMTreeMapProps {
   trees: Tree[];
   onTreeClick: (tree: Tree) => void;
   onCameraClick: () => void;
+  isSatelliteView?: boolean;
+  onSatelliteToggle?: () => void;
 }
 
-const OSMTreeMap = ({ trees, onTreeClick, onCameraClick }: OSMTreeMapProps) => {
+const OSMTreeMap = ({ trees, onTreeClick, onCameraClick, isSatelliteView = false, onSatelliteToggle }: OSMTreeMapProps) => {
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [showTreeForm, setShowTreeForm] = useState(false);
@@ -40,16 +41,15 @@ const OSMTreeMap = ({ trees, onTreeClick, onCameraClick }: OSMTreeMapProps) => {
   const [isLoadingLocation, setIsLoadingLocation] = useState(true);
   const [address, setAddress] = useState<string>('');
   const [draggedTreeId, setDraggedTreeId] = useState<string | null>(null);
-  const [isSatelliteView, setIsSatelliteView] = useState(false);
-  const [mapInstance, setMapInstance] = useState<L.Map | null>(null);
+  const mapRef = useRef<L.Map | null>(null);
   const { updateTree, addTree } = useTree();
 
   // Listen for navigation events from search
   useEffect(() => {
     const handleNavigation = (event: CustomEvent) => {
       const { lat, lng, zoom } = event.detail;
-      if (mapInstance) {
-        mapInstance.setView([lat, lng], zoom);
+      if (mapRef.current) {
+        mapRef.current.setView([lat, lng], zoom);
       }
     };
 
@@ -58,7 +58,7 @@ const OSMTreeMap = ({ trees, onTreeClick, onCameraClick }: OSMTreeMapProps) => {
     return () => {
       window.removeEventListener('navigateToLocation', handleNavigation as EventListener);
     };
-  }, [mapInstance]);
+  }, []);
 
   const getCurrentLocation = useCallback(() => {
     setIsLoadingLocation(true);
@@ -191,11 +191,6 @@ const OSMTreeMap = ({ trees, onTreeClick, onCameraClick }: OSMTreeMapProps) => {
     }
   };
 
-  const toggleSatelliteView = () => {
-    setIsSatelliteView(!isSatelliteView);
-    console.log('Toggling satellite view:', !isSatelliteView);
-  };
-
   if (!userLocation) {
     return (
       <div className="relative w-full h-full flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-50 dark:from-gray-900 dark:to-gray-800">
@@ -216,7 +211,7 @@ const OSMTreeMap = ({ trees, onTreeClick, onCameraClick }: OSMTreeMapProps) => {
           zoom={15}
           style={{ height: '100%', width: '100%' }}
           className="z-0"
-          ref={setMapInstance}
+          whenCreated={setMapInstance => mapRef.current = setMapInstance}
         >
           <TileLayer
             url={isSatelliteView 
@@ -252,7 +247,7 @@ const OSMTreeMap = ({ trees, onTreeClick, onCameraClick }: OSMTreeMapProps) => {
 
       <SatelliteToggle 
         isSatelliteView={isSatelliteView}
-        onToggle={toggleSatelliteView}
+        onToggle={onSatelliteToggle || (() => {})}
       />
 
       <MapControls
