@@ -1,4 +1,5 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+
+import { useEffect, useState, useCallback } from 'react';
 import { MapContainer, TileLayer } from 'react-leaflet';
 import * as L from 'leaflet';
 import { Tree } from '@/types/tree';
@@ -205,7 +206,7 @@ const OSMTreeMap = ({ trees, onTreeClick, onCameraClick, isSatelliteView = false
 
   return (
     <div className="relative w-full h-full">
-      <div style={{ height: '100vh', width: '100%' }}>
+      <div style={{ height: '100%', width: '100%' }}>
         <MapContainer
           center={userLocation}
           zoom={15}

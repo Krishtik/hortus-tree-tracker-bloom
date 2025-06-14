@@ -60,8 +60,8 @@ const AuthenticatedContent = () => {
       case 'home':
         return (
           <div className="relative h-full w-full">
-            {/* Full Screen Map */}
-            <div className="absolute inset-0 z-0">
+            {/* Full Screen Map - Extended to bottom nav */}
+            <div className="absolute inset-0 z-0" style={{ paddingBottom: '80px' }}>
               <OSMTreeMap 
                 trees={trees} 
                 onTreeClick={handleTreeClick}
@@ -109,7 +109,7 @@ const AuthenticatedContent = () => {
 
             {/* Tree View Overlay */}
             {showTreeView && (
-              <div className="absolute top-20 left-4 right-4 bottom-20 z-20 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-200/50 dark:border-gray-700/50 overflow-hidden">
+              <div className="absolute top-20 left-4 right-4 bottom-24 z-20 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-200/50 dark:border-gray-700/50 overflow-hidden">
                 <div className="h-full overflow-y-auto">
                   <HierarchicalTreeView />
                 </div>
@@ -126,10 +126,14 @@ const AuthenticatedContent = () => {
           </div>
         );
       case 'profile':
-        return <ProfileView />;
+        return (
+          <div className="h-full overflow-y-auto" style={{ paddingBottom: '80px' }}>
+            <ProfileView />
+          </div>
+        );
       default:
         return (
-          <div className="absolute inset-0 z-0">
+          <div className="absolute inset-0 z-0" style={{ paddingBottom: '80px' }}>
             <OSMTreeMap 
               trees={trees} 
               onTreeClick={handleTreeClick}
@@ -149,7 +153,7 @@ const AuthenticatedContent = () => {
       </div>
       
       {/* Hovering Bottom Navigation */}
-      <div className="relative z-40">
+      <div className="absolute bottom-0 left-0 right-0 z-40">
         <BottomTabBar 
           activeTab={activeTab} 
           onTabChange={setActiveTab}
