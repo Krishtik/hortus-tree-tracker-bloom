@@ -1,8 +1,9 @@
+
 import { Marker, Popup } from 'react-leaflet';
 import * as L from 'leaflet';
 import { Tree } from '@/types/tree';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Ruler, Calendar, User, TreePine } from 'lucide-react';
+import { MapPin, Calendar, User, TreePine, Image } from 'lucide-react';
 
 interface TreeMarkerProps {
   tree: Tree;
@@ -101,117 +102,107 @@ const TreeMarker = ({ tree, onTreeClick, onDragEnd, isDragging, onDragStart }: T
       icon={createTreeIcon(tree.category, tree.isVerified)}
       draggable={true}
       eventHandlers={{
-        click: () => onTreeClick(tree),
+        click: (e) => {
+          // Prevent the default popup and use our custom one
+          e.target.openPopup();
+        },
         dragstart: onDragStart,
         dragend: handleDragEnd
       }}
     >
-      <Popup>
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-lg border-0 w-72">
-          {/* Header */}
-          <div className="flex items-start justify-between mb-3">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <TreePine className="h-5 w-5 text-green-600 flex-shrink-0" />
-                <h3 className="font-bold text-lg text-gray-900 dark:text-gray-100 truncate">{tree.name}</h3>
+      <Popup closeButton={true} autoClose={true} closeOnClick={false}>
+        <div className="bg-white rounded-xl shadow-xl border-0 p-0 max-w-sm min-w-[280px]">
+          {/* Tree Photo Section */}
+          {tree.photos?.tree ? (
+            <div className="relative h-32 bg-gradient-to-br from-green-400 to-emerald-600 rounded-t-xl overflow-hidden">
+              <img 
+                src={tree.photos.tree} 
+                alt={tree.name}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+            </div>
+          ) : (
+            <div className="h-32 bg-gradient-to-br from-green-400 to-emerald-600 rounded-t-xl flex items-center justify-center">
+              <TreePine className="h-12 w-12 text-white opacity-80" />
+            </div>
+          )}
+          
+          {/* Content Section */}
+          <div className="p-4 space-y-3">
+            {/* Header with badges */}
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <h3 className="font-bold text-lg text-gray-900 truncate">{tree.name}</h3>
+                <p className="text-sm text-gray-600 italic truncate">{tree.scientificName}</p>
+                {tree.localName && (
+                  <p className="text-sm text-blue-600 truncate">{tree.localName}</p>
+                )}
               </div>
-              <p className="text-sm text-gray-600 dark:text-gray-400 italic truncate">{tree.scientificName}</p>
-              {tree.localName && (
-                <p className="text-sm text-blue-600 dark:text-blue-400 truncate">{tree.localName}</p>
-              )}
+              <div className="flex flex-col gap-1 ml-2">
+                {tree.isVerified && (
+                  <Badge className="bg-green-500 text-white text-xs px-2 py-1">
+                    ✓ Verified
+                  </Badge>
+                )}
+                {tree.isAIGenerated && (
+                  <Badge variant="outline" className="text-purple-600 border-purple-300 text-xs px-2 py-1">
+                    🤖 AI
+                  </Badge>
+                )}
+              </div>
             </div>
-            <div className="flex flex-col gap-1 ml-3">
-              {tree.isVerified && (
-                <Badge variant="default" className="bg-green-500 text-white text-xs px-2 py-1">
-                  ✓ Verified
-                </Badge>
-              )}
-              {tree.isAIGenerated && (
-                <Badge variant="outline" className="text-purple-600 border-purple-300 text-xs px-2 py-1">
-                  🤖 AI
-                </Badge>
-              )}
-            </div>
-          </div>
 
-          {/* Category */}
-          <div className="mb-3">
+            {/* Category */}
             <Badge className={`text-xs px-3 py-1 ${getCategoryColor(tree.category)}`}>
               {getCategoryDisplayName(tree.category)}
             </Badge>
-          </div>
 
-          {/* Location Info - Improved and Precise */}
-          <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 mb-3 space-y-2">
-            <div className="flex items-start gap-2">
-              <MapPin className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Coordinates</p>
-                <p className="text-xs font-mono bg-white dark:bg-gray-600 px-2 py-1 rounded border text-gray-800 dark:text-gray-200 break-all">
-                  {tree.location.lat.toFixed(8)}, {tree.location.lng.toFixed(8)}
-                </p>
+            {/* Geolocation Card */}
+            <div className="bg-gray-50 rounded-lg p-3 space-y-2">
+              <div className="flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-gray-600" />
+                <span className="text-sm font-medium text-gray-700">Location</span>
+              </div>
+              
+              <div className="space-y-2">
+                <div>
+                  <p className="text-xs text-gray-600 mb-1">Coordinates</p>
+                  <p className="text-xs font-mono bg-white px-2 py-1 rounded border text-gray-800">
+                    {tree.location.lat.toFixed(8)}, {tree.location.lng.toFixed(8)}
+                  </p>
+                </div>
+                
+                <div>
+                  <p className="text-xs text-gray-600 mb-1">H3 Index (Resolution 15)</p>
+                  <p className="text-xs font-mono bg-white px-2 py-1 rounded border text-gray-800 break-all">
+                    {tree.location.h3Index}
+                  </p>
+                  <p className="text-xs text-green-600 mt-1 font-medium">
+                    Precision: ~0.895 m²
+                  </p>
+                </div>
               </div>
             </div>
-            
-            <div className="border-t border-gray-200 dark:border-gray-600 pt-2">
-              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">H3 Index (Resolution 15)</p>
-              <p className="text-xs font-mono bg-white dark:bg-gray-600 px-2 py-1 rounded border text-gray-800 dark:text-gray-200 break-all">
-                {tree.location.h3Index}
-              </p>
-              <p className="text-xs text-green-600 dark:text-green-400 mt-1 font-medium">
-                Precision: ~0.895 m²
-              </p>
-            </div>
-          </div>
 
-          {/* Measurements */}
-          {(tree.measurements.height || tree.measurements.trunkWidth) && (
-            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 mb-3">
-              <div className="flex items-center gap-2 mb-2">
-                <Ruler className="h-4 w-4 text-blue-600" />
-                <p className="text-xs font-medium text-blue-800 dark:text-blue-300">Measurements</p>
+            {/* Tagged Info */}
+            <div className="flex items-center justify-between text-xs text-gray-500 pt-2 border-t border-gray-200">
+              <div className="flex items-center gap-1">
+                <User className="h-3 w-3" />
+                <span>Tagged by: {tree.taggedBy}</span>
               </div>
-              <div className="grid grid-cols-2 gap-2">
-                {tree.measurements.height && (
-                  <div className="text-xs">
-                    <span className="text-blue-700 dark:text-blue-400 font-medium">Height:</span>
-                    <br />
-                    <span className="text-blue-800 dark:text-blue-300">{tree.measurements.height}m</span>
-                  </div>
-                )}
-                {tree.measurements.trunkWidth && (
-                  <div className="text-xs">
-                    <span className="text-blue-700 dark:text-blue-400 font-medium">Trunk:</span>
-                    <br />
-                    <span className="text-blue-800 dark:text-blue-300">{tree.measurements.trunkWidth}cm</span>
-                  </div>
-                )}
+              <div className="flex items-center gap-1">
+                <Calendar className="h-3 w-3" />
+                <span>{tree.taggedAt.toLocaleDateString()}</span>
               </div>
             </div>
-          )}
 
-          {/* Action Info */}
-          <div className="border-t border-gray-200 dark:border-gray-600 pt-3 mb-3">
-            <p className="text-xs text-orange-600 dark:text-orange-400 font-medium flex items-center gap-1">
-              🖱️ Drag to update position
-            </p>
+            {/* Action Info */}
             {isDragging && (
-              <p className="text-xs text-blue-600 dark:text-blue-400 font-semibold animate-pulse mt-1">
+              <div className="text-xs text-blue-600 font-semibold animate-pulse flex items-center gap-1">
                 🔄 Updating location...
-              </p>
+              </div>
             )}
-          </div>
-
-          {/* Footer Info */}
-          <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
-            <div className="flex items-center gap-2">
-              <User className="h-3 w-3" />
-              <span>Tagged by: {tree.taggedBy}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Calendar className="h-3 w-3" />
-              <span>{tree.taggedAt.toLocaleDateString()}</span>
-            </div>
           </div>
         </div>
       </Popup>
