@@ -31,7 +31,6 @@ const AuthenticatedContent = () => {
     
     setIsSearching(true);
     try {
-      // Use Nominatim API to search for places
       const response = await fetch(
         `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1`
       );
@@ -42,7 +41,6 @@ const AuthenticatedContent = () => {
         const lat = parseFloat(result.lat);
         const lng = parseFloat(result.lon);
         
-        // Trigger map navigation to the searched location
         const mapEvent = new CustomEvent('navigateToLocation', {
           detail: { lat, lng, zoom: 15 }
         });
@@ -61,9 +59,8 @@ const AuthenticatedContent = () => {
     switch (activeTab) {
       case 'home':
         return (
-          <div className="relative h-full">
-            {/* Full-screen map */}
-            <div className="absolute inset-0">
+          <div className="relative h-full w-full">
+            <div className="absolute inset-0 z-0">
               <OSMTreeMap 
                 trees={trees} 
                 onTreeClick={handleTreeClick}
@@ -105,16 +102,6 @@ const AuthenticatedContent = () => {
                 <TreePine className="h-4 w-4 mr-2 text-green-600" />
                 <span className="text-sm font-medium">Trees</span>
               </Button>
-              
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setActiveTab('log')}
-                className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-xl"
-              >
-                <TreePine className="h-4 w-4 mr-2 text-blue-600" />
-                <span className="text-sm font-medium">Log</span>
-              </Button>
             </div>
 
             {/* Tree View Overlay */}
@@ -136,12 +123,20 @@ const AuthenticatedContent = () => {
           </div>
         );
       case 'log':
-        return <TreeLogView />;
+        return (
+          <div className="h-full bg-gray-50 dark:bg-gray-900">
+            <TreeLogView />
+          </div>
+        );
       case 'profile':
-        return <ProfileView />;
+        return (
+          <div className="h-full bg-gray-50 dark:bg-gray-900">
+            <ProfileView />
+          </div>
+        );
       default:
         return (
-          <div className="absolute inset-0">
+          <div className="absolute inset-0 z-0">
             <OSMTreeMap 
               trees={trees} 
               onTreeClick={handleTreeClick}
@@ -154,7 +149,7 @@ const AuthenticatedContent = () => {
 
   return (
     <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-900 overflow-hidden">
-      <div className="flex-1 relative">
+      <div className="flex-1 relative overflow-hidden">
         {renderTabContent()}
       </div>
       
