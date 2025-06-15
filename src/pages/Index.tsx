@@ -68,6 +68,7 @@ const Index = () => {
       {selectedTree && (
         <TreeDetailModal 
           tree={selectedTree}
+          isOpen={!!selectedTree}
           onClose={() => {
             setSelectedTree(null);
             console.log('Tree detail modal closed');
