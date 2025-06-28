@@ -1,11 +1,10 @@
-
 import { apiClient } from './apiClient';
 import { API_CONFIG } from '@/config/api';
 
 export interface User {
   id: string;
   email: string;
-  name: string;
+  username: string;
   role: 'USER' | 'ADMIN' | 'MODERATOR';
   isVerified: boolean;
   createdAt: string;
@@ -13,14 +12,14 @@ export interface User {
 }
 
 export interface LoginRequest {
-  email: string;
+  username: string; // <-- Use username for login, since backend expects it
   password: string;
 }
 
 export interface RegisterRequest {
+  username: string;
   email: string;
   password: string;
-  name: string;
 }
 
 export interface AuthResponse {
@@ -37,13 +36,12 @@ class AuthService {
         API_CONFIG.ENDPOINTS.AUTH.LOGIN,
         credentials
       );
-      
       if (response.success) {
         apiClient.setToken(response.data.token);
+        localStorage.setItem('krish_hortus_token', response.data.token);
         localStorage.setItem('krish_hortus_refresh_token', response.data.refreshToken);
         localStorage.setItem('krish_hortus_user', JSON.stringify(response.data.user));
       }
-      
       return response.data;
     } catch (error) {
       console.error('Login error:', error);
@@ -57,13 +55,12 @@ class AuthService {
         API_CONFIG.ENDPOINTS.AUTH.REGISTER,
         userData
       );
-      
       if (response.success) {
         apiClient.setToken(response.data.token);
+        localStorage.setItem('krish_hortus_token', response.data.token);
         localStorage.setItem('krish_hortus_refresh_token', response.data.refreshToken);
         localStorage.setItem('krish_hortus_user', JSON.stringify(response.data.user));
       }
-      
       return response.data;
     } catch (error) {
       console.error('Registration error:', error);
@@ -78,6 +75,7 @@ class AuthService {
       console.error('Logout error:', error);
     } finally {
       apiClient.clearToken();
+      localStorage.removeItem('krish_hortus_token');
       localStorage.removeItem('krish_hortus_refresh_token');
       localStorage.removeItem('krish_hortus_user');
     }
@@ -88,22 +86,20 @@ class AuthService {
     if (!refreshToken) {
       throw new Error('No refresh token available');
     }
-
     try {
       const response = await apiClient.post<AuthResponse>(
         API_CONFIG.ENDPOINTS.AUTH.REFRESH,
         { refreshToken }
       );
-      
       if (response.success) {
         apiClient.setToken(response.data.token);
+        localStorage.setItem('krish_hortus_token', response.data.token);
         localStorage.setItem('krish_hortus_user', JSON.stringify(response.data.user));
       }
-      
       return response.data;
     } catch (error) {
       console.error('Token refresh error:', error);
-      this.logout(); // Clear invalid tokens
+      this.logout();
       throw new Error('Token refresh failed');
     }
   }
@@ -134,9 +130,7 @@ class AuthService {
   isTokenValid(): boolean {
     const token = localStorage.getItem('krish_hortus_token');
     if (!token) return false;
-
     try {
-      // Basic JWT validation (check if it's expired)
       const payload = JSON.parse(atob(token.split('.')[1]));
       const currentTime = Date.now() / 1000;
       return payload.exp > currentTime;

@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: tree-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/tree_db
+    username: postgres
+    password: password
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+server:
+  port: 8082
+
+h3:
+  resolution: 15

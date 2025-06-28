@@ -1,13 +1,12 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { authService, User, LoginRequest, RegisterRequest } from '@/services/authService';
+import { authService, User } from '@/services/authService';
 
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  signup: (email: string, password: string, name?: string) => Promise<void>;
-  logout: () => void;
+  login: (usernameOrEmail: string, password: string) => Promise<void>;
+  signup: (email: string, password: string, username?: string) => Promise<void>;
+  logout: () => Promise<void>;
   loading: boolean;
   refreshToken: () => Promise<void>;
 }
@@ -28,92 +27,65 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     initializeAuth();
+    // eslint-disable-next-line
   }, []);
 
   const initializeAuth = async () => {
     setLoading(true);
-    
     try {
-      // Check if token is valid
       if (authService.isTokenValid()) {
-        // Try to get current user from API
         try {
           const currentUser = await authService.getCurrentUser();
           setUser(currentUser);
-        } catch (error) {
-          console.error('Failed to get current user:', error);
-          // Try to refresh token
+        } catch {
           try {
             const authResponse = await authService.refreshToken();
-            setUser(authResponse.user);
-          } catch (refreshError) {
-            console.error('Token refresh failed:', refreshError);
-            // Fallback to stored user for demo mode
-            const storedUser = authService.getStoredUser();
-            if (storedUser) {
-              setUser(storedUser);
-            }
+            setUser({
+              id: authResponse.id,
+              username: authResponse.username,
+              email: authResponse.email,
+              roles: authResponse.roles,
+              // ...any other fields you want
+            });
+          } catch {
+            setUser(authService.getStoredUser() || null);
           }
         }
       } else {
-        // Fallback to stored user for demo mode
-        const storedUser = authService.getStoredUser();
-        if (storedUser) {
-          setUser(storedUser);
-        }
+        setUser(authService.getStoredUser() || null);
       }
-    } catch (error) {
-      console.error('Auth initialization error:', error);
+    } catch {
+      setUser(null);
     } finally {
       setLoading(false);
     }
   };
 
-  const login = async (email: string, password: string) => {
+  const login = async (usernameOrEmail: string, password: string) => {
     setLoading(true);
     try {
-      const authResponse = await authService.login({ email, password });
-      setUser(authResponse.user);
-    } catch (error) {
-      console.error('Login error:', error);
-      // Fallback for demo mode
-      const userData = {
-        id: Math.random().toString(36).substr(2, 9),
-        email,
-        name: email.split('@')[0],
-        role: 'USER' as const,
-        isVerified: true,
-        createdAt: new Date().toISOString()
-      };
-      
-      setUser(userData);
-      localStorage.setItem('krish_hortus_user', JSON.stringify(userData));
-      throw new Error('Backend not connected - using demo mode');
+      const authResponse = await authService.login({ usernameOrEmail, password });
+      setUser({
+          id: authResponse.id,
+          username: authResponse.username,
+          email: authResponse.email,
+          roles: authResponse.roles,
+          // ...any other fields you want
+        });
     } finally {
       setLoading(false);
     }
   };
 
-  const signup = async (email: string, password: string, name?: string) => {
+  const signup = async (email: string, password: string, username?: string) => {
     setLoading(true);
     try {
-      const authResponse = await authService.register({ email, password, name: name || email.split('@')[0] });
-      setUser(authResponse.user);
-    } catch (error) {
-      console.error('Signup error:', error);
-      // Fallback for demo mode
-      const userData = {
-        id: Math.random().toString(36).substr(2, 9),
+      const authResponse = await authService.register({
+        username: username || email.split('@')[0],
         email,
-        name: name || email.split('@')[0],
-        role: 'USER' as const,
-        isVerified: false,
-        createdAt: new Date().toISOString()
-      };
-      
-      setUser(userData);
-      localStorage.setItem('krish_hortus_user', JSON.stringify(userData));
-      throw new Error('Backend not connected - using demo mode');
+        password,
+      });
+      setUser(authResponse.user);
     } finally {
       setLoading(false);
     }
@@ -122,30 +94,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async () => {
     try {
       await authService.logout();
-    } catch (error) {
-      console.error('Logout error:', error);
+    } finally {
+      setUser(null);
     }
-    setUser(null);
   };
 
   const refreshToken = async () => {
     try {
       const authResponse = await authService.refreshToken();
       setUser(authResponse.user);
-    } catch (error) {
-      console.error('Token refresh error:', error);
+    } catch {
       setUser(null);
     }
   };
 
-  const value = {
+  const value: AuthContextType = {
     user,
     isAuthenticated: !!user,
     login,
     signup,
     logout,
     loading,
-    refreshToken
+    refreshToken,
   };
 
   return (

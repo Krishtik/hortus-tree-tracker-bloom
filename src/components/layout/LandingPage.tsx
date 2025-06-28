@@ -12,6 +12,18 @@ import { Button } from '@/components/ui/button';
  * Features split-screen layout, gradient backgrounds, and smooth animations
  * Showcases app features and provides elegant authentication flow
  */
+/* This component serves as the landing page for the Krish Hortus application.
+ * It includes a modern design with animated icons, feature badges, and a primary call-to-action button.
+  * The page is fully responsive and optimized for both desktop and mobile views.
+  * It also integrates an authentication modal for user sign-up and login.
+ * The layout is designed to be visually appealing with a focus on user engagement and ease of navigation.  
+ * The component uses Tailwind CSS for styling and Lucide icons for visual elements.
+ * The main features include:
+ *  - Sigin and login page
+ * - Authentication modal for user sign-up and login
+ * The component is structured to provide a seamless user experience, guiding users through the app's capabilities and encouraging them to start their tree tagging journey.
+ */
+
 const LandingPage = () => {
   // State for controlling authentication modal visibility
   const [showAuthModal, setShowAuthModal] = useState(false);

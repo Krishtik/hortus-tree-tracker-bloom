@@ -1,0 +1,109 @@
+# Krish Hortus API Configuration
+# This file contains all the configuration settings for the Spring Boot application
+
+# Server Configuration
+server:
+  port: 8081
+  servlet:
+    context-path: /
+  compression:
+    enabled: true
+    mime-types: text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json
+    min-response-size: 1024
+
+# Spring Boot Application Configuration
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/krishhortus
+    driverClassName: org.postgresql.Driver
+    username: postgres
+    password: 97667456384
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: krishnaacad1@gmail.com
+    password: Hare Krishna
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+  # JPA/Hibernate Configuration
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  # Database Configuration (H2 for development, can be changed to PostgreSQL for production)
+
+  # File Upload Configuration
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 50MB
+
+# Logging Configuration
+logging:
+  level:
+    com.krishhortus: DEBUG
+    org.springframework.web: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# Management Endpoints (Actuator)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+# Custom Application Properties
+krishhortus:
+  api:
+    version: 1.0.0
+    title: Krish Hortus Tree Management API
+    description: RESTful API for tree tagging, tracking, and geospatial management
+
+  # File Storage Configuration
+  file:
+    upload-dir: uploads/
+    max-size: 10MB
+    allowed-types: image/jpeg,image/png,image/gif
+
+  # H3 Geospatial Configuration
+  h3:
+    default-resolution: 15
+    max-resolution: 15
+    min-resolution: 0
+
+  # Security Configuration
+  security:
+    jwt:
+      secret: VGhpc0lzQVN1cGVyU2VjcmV0S2V5Rm9ySldUVGhhdElzTG9uZ0FuZFNlY3VyZTEyMzQ1IQ==
+      expiration: 86400000 # 24 hours in milliseconds
+
+  # CORS Configuration
+  cors:
+    allowed-origins:
+      - http://localhost:3000
+      - https://krishhortus.com
+    allowed-methods:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+      - PATCH
+      - OPTIONS
+    allowed-headers: "*"
+    allow-credentials: true
