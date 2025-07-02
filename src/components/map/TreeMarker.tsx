@@ -165,9 +165,10 @@ const TreeMarker = ({ tree, onTreeClick, onDragEnd, isDragging, onDragStart }: T
             {tree.location.lat.toFixed(6)}, {tree.location.lng.toFixed(6)}
           </span>
           <button
-            onClick={() =>
+            onClick={(e) =>{
+              e.stopPropagation();
               handleCopy('coords', `${tree.location.lat.toFixed(6)}, ${tree.location.lng.toFixed(6)}`)
-            }
+            }}
             className="text-gray-500 hover:text-green-600"
           >
             {copiedField === 'coords' ? '✅' : <ClipboardCopy className="h-4 w-4" />}
@@ -180,7 +181,10 @@ const TreeMarker = ({ tree, onTreeClick, onDragEnd, isDragging, onDragStart }: T
           <div className="flex justify-between items-center">
             <span className="font-mono">{tree.location.h3Index}</span>
             <button
-              onClick={() => handleCopy('h3', tree.location.h3Index)}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleCopy('h3', tree.location.h3Index);
+              }}
               className="text-gray-500 hover:text-green-600"
             >
               {copiedField === 'h3' ? '✅' : <ClipboardCopy className="h-4 w-4" />}
