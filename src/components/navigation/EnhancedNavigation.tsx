@@ -1,7 +1,8 @@
 
 import { useState } from 'react';
+import { SunIcon, MoonIcon, ComputerDesktopIcon} from '@heroicons/react/24/outline'
 import { Button } from '@/components/ui/button';
-import { Bell, Plus, LogOut, Palette } from 'lucide-react';
+import { Bell, Plus, LogOut } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useTheme } from 'next-themes';
 import { useAuth } from '@/contexts/AuthContext';
@@ -98,22 +99,22 @@ const EnhancedNavigation = ({
                   onClick={() => setTheme('light')}
                   className="text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200 rounded-lg"
                 >
-                  <Palette className="h-4 w-4 mr-2" />
-                  ☀️ Light
+                  <SunIcon className="h-4 w-4 mr-2" />
+                  Light
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={() => setTheme('dark')}
                   className="text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200 rounded-lg"
                 >
-                  <Palette className="h-4 w-4 mr-2" />
-                  🌙 Dark
+                  <MoonIcon className="h-4 w-4 mr-2"/>
+                  Dark
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={() => setTheme('system')}
                   className="text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200 rounded-lg"
                 >
-                  <Palette className="h-4 w-4 mr-2" />
-                  💻 System
+                  <ComputerDesktopIcon className="h-4 w-4 mr-2" />
+                  System
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

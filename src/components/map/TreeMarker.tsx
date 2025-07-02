@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { MapPin, Calendar, User, TreePine, Camera } from 'lucide-react';
 import { ClipboardCopy } from 'lucide-react';
 import { useState } from 'react';
+import { Button } from '../ui/button';
 
 interface TreeMarkerProps {
   tree: Tree;
@@ -212,8 +213,6 @@ const TreeMarker = ({ tree, onTreeClick, onDragEnd, isDragging, onDragStart }: T
         )}
       </div>
     </Popup>
-
-
 
     </Marker>
   );

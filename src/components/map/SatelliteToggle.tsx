@@ -13,13 +13,13 @@ const SatelliteToggle = ({ isSatelliteView, onToggle }: SatelliteToggleProps) =>
       onClick={onToggle}
       size="sm"
       variant="outline"
-      className="fixed top-20 right-4 z-30 w-12 h-12 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl shadow-xl border border-gray-200/50 dark:border-gray-700/50 transition-all duration-300 hover:scale-105 hover:shadow-2xl rounded-2xl group sm:top-6 sm:right-20"
-      title={isSatelliteView ? 'Switch to Street View' : 'Switch to Satellite View'}
+      className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl shadow-xl border border-emerald-200/50 dark:border-emerald-700/50 transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-2xl group" 
+      title={isSatelliteView ? 'Switch to Satellite View' : 'Switch to Street View'}
     >
       {isSatelliteView ? (
-        <Map className="h-4 w-4 text-gray-600 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
+        <Map className="h-8 w-8 text-gray-600 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
       ) : (
-        <Satellite className="h-4 w-4 text-gray-600 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
+        <Satellite className="h-8 w-8 text-gray-600 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
       )}
     </Button>
   );

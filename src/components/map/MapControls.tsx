@@ -27,14 +27,14 @@ const MapControls = ({ onSettingsClick, onLocateClick, isLocating }: MapControls
       </Button>
 
       {/* Settings FAB - Modern floating design */}
-      <Button
+      {/* <Button
         onClick={onSettingsClick}
         size="sm"
         variant="outline"
-        className="fixed top-6 left-6 z-20 w-12 h-12 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl shadow-xl border border-gray-200/50 dark:border-gray-700/50 transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-2xl group"
+      className="fixed bottom-60 right-6 z-50 w-14 h-14 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl shadow-xl border border-emerald-200/50 dark:border-emerald-700/50 transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-2xl group" 
       >
         <Settings className="h-4 w-4 text-gray-600 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
-      </Button>
+      </Button> */}
     </>
   );
 };
