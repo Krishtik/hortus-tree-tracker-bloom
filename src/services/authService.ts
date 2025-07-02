@@ -12,7 +12,7 @@ export interface User {
 }
 
 export interface LoginRequest {
-  username: string; // <-- Use username for login, since backend expects it
+  username: string;
   password: string;
 }
 
@@ -23,26 +23,47 @@ export interface RegisterRequest {
 }
 
 export interface AuthResponse {
-  user: User;
+  id: string;
+  username: string;
+  email: string;
+  roles: string[];
   token: string;
   refreshToken: string;
-  expiresIn: number;
+  expiresIn?: number;
+  profilePicture?: string;
 }
+
+// 🔁 Utility to map AuthResponse to User
+const mapAuthResponseToUser = (data: AuthResponse): User => ({
+  id: data.id,
+  email: data.email,
+  username: data.username,
+  role: (data.roles?.[0]?.replace('ROLE_', '') as 'USER' | 'ADMIN' | 'MODERATOR') || 'USER',
+  isVerified: true,
+  createdAt: new Date().toISOString(),
+  profilePicture: data.profilePicture || undefined
+});
 
 class AuthService {
   async login(credentials: LoginRequest): Promise<AuthResponse> {
     try {
-      const response = await apiClient.post<AuthResponse>(
+      const data = await apiClient.post<AuthResponse>(
         API_CONFIG.ENDPOINTS.AUTH.LOGIN,
         credentials
       );
-      if (response.success) {
-        apiClient.setToken(response.data.token);
-        localStorage.setItem('krish_hortus_token', response.data.token);
-        localStorage.setItem('krish_hortus_refresh_token', response.data.refreshToken);
-        localStorage.setItem('krish_hortus_user', JSON.stringify(response.data.user));
+
+      if (!data || !data.id) {
+        throw new Error("Invalid login response: missing user ID");
       }
-      return response.data;
+
+      apiClient.setToken(data.token);
+      localStorage.setItem('krish_hortus_token', data.token);
+      localStorage.setItem('krish_hortus_refresh_token', data.refreshToken);
+
+      const user = mapAuthResponseToUser(data);
+      localStorage.setItem('krish_hortus_user', JSON.stringify(user));
+
+      return data;
     } catch (error) {
       console.error('Login error:', error);
       throw new Error(error instanceof Error ? error.message : 'Login failed');
@@ -51,17 +72,23 @@ class AuthService {
 
   async register(userData: RegisterRequest): Promise<AuthResponse> {
     try {
-      const response = await apiClient.post<AuthResponse>(
+      const data = await apiClient.post<AuthResponse>(
         API_CONFIG.ENDPOINTS.AUTH.REGISTER,
         userData
       );
-      if (response.success) {
-        apiClient.setToken(response.data.token);
-        localStorage.setItem('krish_hortus_token', response.data.token);
-        localStorage.setItem('krish_hortus_refresh_token', response.data.refreshToken);
-        localStorage.setItem('krish_hortus_user', JSON.stringify(response.data.user));
+
+      if (!data || !data.id) {
+        throw new Error("Invalid registration response: missing user ID");
       }
-      return response.data;
+
+      apiClient.setToken(data.token);
+      localStorage.setItem('krish_hortus_token', data.token);
+      localStorage.setItem('krish_hortus_refresh_token', data.refreshToken);
+
+      const user = mapAuthResponseToUser(data);
+      localStorage.setItem('krish_hortus_user', JSON.stringify(user));
+
+      return data;
     } catch (error) {
       console.error('Registration error:', error);
       throw new Error(error instanceof Error ? error.message : 'Registration failed');
@@ -86,17 +113,25 @@ class AuthService {
     if (!refreshToken) {
       throw new Error('No refresh token available');
     }
+
     try {
-      const response = await apiClient.post<AuthResponse>(
+      const data = await apiClient.post<AuthResponse>(
         API_CONFIG.ENDPOINTS.AUTH.REFRESH,
         { refreshToken }
       );
-      if (response.success) {
-        apiClient.setToken(response.data.token);
-        localStorage.setItem('krish_hortus_token', response.data.token);
-        localStorage.setItem('krish_hortus_user', JSON.stringify(response.data.user));
+
+      if (!data || !data.id) {
+        throw new Error("Invalid refresh response: missing user ID");
       }
-      return response.data;
+
+      apiClient.setToken(data.token);
+      localStorage.setItem('krish_hortus_token', data.token);
+      localStorage.setItem('krish_hortus_refresh_token', data.refreshToken);
+
+      const user = mapAuthResponseToUser(data);
+      localStorage.setItem('krish_hortus_user', JSON.stringify(user));
+
+      return data;
     } catch (error) {
       console.error('Token refresh error:', error);
       this.logout();
@@ -106,8 +141,8 @@ class AuthService {
 
   async getCurrentUser(): Promise<User> {
     try {
-      const response = await apiClient.get<User>(API_CONFIG.ENDPOINTS.AUTH.PROFILE);
-      return response.data;
+      const user = await apiClient.get<User>(API_CONFIG.ENDPOINTS.AUTH.PROFILE);
+      return user;
     } catch (error) {
       console.error('Get current user error:', error);
       throw new Error('Failed to get user profile');

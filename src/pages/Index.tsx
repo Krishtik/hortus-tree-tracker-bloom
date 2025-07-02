@@ -5,7 +5,7 @@ import { useTree } from '@/contexts/TreeContext';
 import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout';
 import LandingPage from '@/components/layout/LandingPage';
 import OSMTreeMap from '@/components/map/OSMTreeMap';
-import TreeDetailModal from '@/components/tree/TreeDetailModal';
+//import TreeDetailModal from '@/components/tree/TreeDetailModal';
 import { Tree } from '@/types/tree';
 
 /**
@@ -65,7 +65,7 @@ const Index = () => {
       />
       
       {/* Tree detail modal - shows when a tree is selected */}
-      {selectedTree && (
+      {/* {selectedTree && (
         <TreeDetailModal 
           tree={selectedTree}
           isOpen={true}
@@ -74,7 +74,7 @@ const Index = () => {
             console.log('Tree detail modal closed');
           }}
         />
-      )}
+      )} */}
     </AuthenticatedLayout>
   );
 };

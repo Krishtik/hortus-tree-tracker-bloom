@@ -1,11 +1,10 @@
-
 import { API_CONFIG, getAuthHeaders } from '@/config/api';
 
 interface ApiResponse<T> {
   data: T;
-  message: string;
-  success: boolean;
-  timestamp: string;
+  message?: string;
+  success?: boolean;
+  timestamp?: string;
 }
 
 interface ApiError {
@@ -41,12 +40,13 @@ class ApiClient {
   private async request<T>(
     endpoint: string,
     options: RequestInit = {}
-  ): Promise<ApiResponse<T>> {
+  ): Promise<T> {
     const url = `${this.baseURL}${endpoint}`;
-    
+
     const config: RequestInit = {
       ...options,
       headers: {
+        'Content-Type': 'application/json',
         ...getAuthHeaders(this.token || undefined),
         ...options.headers,
       },
@@ -54,23 +54,32 @@ class ApiClient {
 
     try {
       console.log(`API Request: ${config.method || 'GET'} ${url}`);
-      
+
       const response = await fetch(url, config);
-      
+
+      const raw = await response.text();
+      let parsed: any;
+
+      try {
+        parsed = JSON.parse(raw);
+      } catch {
+        throw new Error(`Invalid JSON response: ${raw}`);
+      }
+
       if (!response.ok) {
-        const errorData: ApiError = await response.json().catch(() => ({
+        const errorData: ApiError = parsed || {
           message: `HTTP ${response.status}: ${response.statusText}`,
           code: 'HTTP_ERROR',
-          timestamp: new Date().toISOString()
-        }));
-        
+          timestamp: new Date().toISOString(),
+        };
         throw new Error(errorData.message || `Request failed with status ${response.status}`);
       }
 
-      const data: ApiResponse<T> = await response.json();
-      console.log('API Response:', data);
-      
-      return data;
+      // Handle both wrapped and flat responses
+      const result: T = parsed.data ?? parsed;
+      console.log('API Response:', result);
+
+      return result;
     } catch (error) {
       console.error('API Error:', error);
       throw error;
@@ -78,39 +87,38 @@ class ApiClient {
   }
 
   // HTTP Methods
-  async get<T>(endpoint: string): Promise<ApiResponse<T>> {
+  async get<T>(endpoint: string): Promise<T> {
     return this.request<T>(endpoint, { method: 'GET' });
   }
 
-  async post<T>(endpoint: string, data?: any): Promise<ApiResponse<T>> {
+  async post<T>(endpoint: string, data?: any): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'POST',
       body: data ? JSON.stringify(data) : undefined,
     });
   }
 
-  async put<T>(endpoint: string, data?: any): Promise<ApiResponse<T>> {
+  async put<T>(endpoint: string, data?: any): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'PUT',
       body: data ? JSON.stringify(data) : undefined,
     });
   }
 
-  async patch<T>(endpoint: string, data?: any): Promise<ApiResponse<T>> {
+  async patch<T>(endpoint: string, data?: any): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'PATCH',
       body: data ? JSON.stringify(data) : undefined,
     });
   }
 
-  async delete<T>(endpoint: string): Promise<ApiResponse<T>> {
+  async delete<T>(endpoint: string): Promise<T> {
     return this.request<T>(endpoint, { method: 'DELETE' });
   }
 
-  // File upload with form data
-  async uploadFile<T>(endpoint: string, formData: FormData): Promise<ApiResponse<T>> {
+  async uploadFile<T>(endpoint: string, formData: FormData): Promise<T> {
     const headers = this.token ? { Authorization: `Bearer ${this.token}` } : {};
-    
+
     return this.request<T>(endpoint, {
       method: 'POST',
       headers,

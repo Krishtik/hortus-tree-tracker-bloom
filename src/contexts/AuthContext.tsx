@@ -21,6 +21,22 @@ export const useAuth = () => {
   return context;
 };
 
+// 🔁 Utility to map AuthResponse to User
+const mapAuthResponseToUser = (authResponse: any): User => {
+  const user = {
+    id: authResponse.id,
+    username: authResponse.username,
+    email: authResponse.email,
+    role: (authResponse.roles?.[0]?.replace('ROLE_', '') as 'USER' | 'ADMIN' | 'MODERATOR') || 'USER',
+    isVerified: true,
+    createdAt: new Date().toISOString(),
+    profilePicture: authResponse.profilePicture || undefined
+  };
+  console.log("Mapped user:", user);
+  return user;
+};
+
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -40,13 +56,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } catch {
           try {
             const authResponse = await authService.refreshToken();
-            setUser({
-              id: authResponse.id,
-              username: authResponse.username,
-              email: authResponse.email,
-              roles: authResponse.roles,
-              // ...any other fields you want
-            });
+            setUser(mapAuthResponseToUser(authResponse));
           } catch {
             setUser(authService.getStoredUser() || null);
           }
@@ -65,17 +75,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(true);
     try {
       const authResponse = await authService.login({ usernameOrEmail, password });
-      setUser({
-          id: authResponse.id,
-          username: authResponse.username,
-          email: authResponse.email,
-          roles: authResponse.roles,
-          // ...any other fields you want
-        });
+      console.log("Auth response from login:", authResponse);
+      const user = mapAuthResponseToUser(authResponse);
+      setUser(user);
     } finally {
       setLoading(false);
     }
   };
+
+
 
   const signup = async (email: string, password: string, username?: string) => {
     setLoading(true);
@@ -83,9 +91,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const authResponse = await authService.register({
         username: username || email.split('@')[0],
         email,
-        password,
+        password
       });
-      setUser(authResponse.user);
+      setUser(mapAuthResponseToUser(authResponse));
     } finally {
       setLoading(false);
     }
@@ -102,7 +110,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const refreshToken = async () => {
     try {
       const authResponse = await authService.refreshToken();
-      setUser(authResponse.user);
+      setUser(mapAuthResponseToUser(authResponse));
     } catch {
       setUser(null);
     }
@@ -115,12 +123,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signup,
     logout,
     loading,
-    refreshToken,
+    refreshToken
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

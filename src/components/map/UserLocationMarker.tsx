@@ -23,17 +23,19 @@ const UserLocationMarker = ({ position, address }: UserLocationMarkerProps) => {
   return (
     <Marker position={position} icon={createUserIcon()}>
       <Popup>
-        <div className="text-center max-w-xs">
-          <strong className="text-green-800">Your Location</strong>
-          <br />
-          <small className="text-xs text-muted-foreground">
-            {address}
-          </small>
+      <div className="relative w-auto max-w-[100vw] bg-white rounded-xl shadow-xl p-4 pt-6 text-sm text-gray-800 space-y-3 overflow">
+          <div className="text-center max-w-xs">
+            <strong className="text-green-800">Your Location</strong>
+            <br />
+            {/* <small className="text-xs text-muted-foreground">
+              {address}
+          </small> */}
           <br />
           <small className="text-xs">Lat: {position[0].toFixed(6)}</small>
           <br />
           <small className="text-xs">Lng: {position[1].toFixed(6)}</small>
         </div>
+      </div>
       </Popup>
     </Marker>
   );
