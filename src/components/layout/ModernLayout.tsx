@@ -7,7 +7,7 @@ import HierarchicalTreeView from '@/components/tree/HierarchicalTreeView';
 import OSMTreeMap from '@/components/map/OSMTreeMap';
 import ProfileView from '@/components/profile/ProfileView';
 import TreeLogView from '@/components/tree/TreeLogView';
-import TreeDetailModal from '@/components/tree/TreeDetailModal';
+//import TreeDetailModal from '@/components/tree/TreeDetailModal';
 import NotificationModal from '@/components/notifications/NotificationModal';
 import { Tree } from '@/types/tree';
 
@@ -121,13 +121,13 @@ const ModernLayout = () => {
         {renderContent()}
       </main>
 
-      {selectedTree && (
+      {/* {selectedTree && (
         <TreeDetailModal
           tree={selectedTree}
           isOpen={!!selectedTree}
           onClose={() => setSelectedTree(null)}
         />
-      )}
+      )} */}
 
       <NotificationModal
         isOpen={showNotifications}

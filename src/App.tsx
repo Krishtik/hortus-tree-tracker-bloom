@@ -9,7 +9,8 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { TreeProvider } from "@/contexts/TreeContext";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
-
+// Update the import path to match your actual file structure, for example:
+import ProfileView from './components/profile/ProfileView';
 const queryClient = new QueryClient();
 
 const App = () => {
@@ -25,6 +26,7 @@ const App = () => {
         });
     });
   }
+  
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -37,6 +39,7 @@ const App = () => {
               <BrowserRouter>
                 <Routes>
                   <Route path="/" element={<Index />} />
+                  <Route path="/profile" element={<ProfileView />} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>

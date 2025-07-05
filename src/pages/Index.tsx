@@ -5,6 +5,7 @@ import { useTree } from '@/contexts/TreeContext';
 import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout';
 import LandingPage from '@/components/layout/LandingPage';
 import OSMTreeMap from '@/components/map/OSMTreeMap';
+import EnhancedNavigation from '@/components/navigation/EnhancedNavigation';
 //import TreeDetailModal from '@/components/tree/TreeDetailModal';
 import { Tree } from '@/types/tree';
 
@@ -34,10 +35,10 @@ const Index = () => {
    * Handles camera capture functionality
    * Currently logs the action - can be extended for photo capture
    */
-  const handleCameraClick = () => {
-    console.log('Camera clicked - opening tree form');
-    // This can be extended to open camera capture or tree form
-  };
+  // const handleCameraClick = () => {
+  //   console.log('Camera clicked - opening tree form');
+  //   // This can be extended to open camera capture or tree form
+  // };
 
   /**
    * Toggles between satellite and street map view
@@ -46,6 +47,11 @@ const Index = () => {
     setIsSatelliteView(prev => !prev);
     console.log('Satellite view toggled:', !isSatelliteView);
   };
+
+  const handleNotificationClick = () => {
+    console.log('Notification clicked - opening notification panel');
+  };
+  const isMapPage = location.pathname === '/';
 
   // Show landing page for unauthenticated users
   if (!isAuthenticated) {
@@ -56,10 +62,10 @@ const Index = () => {
   return (
     <AuthenticatedLayout>
       {/* Main map component with tree markers and controls */}
-      <OSMTreeMap 
+      <OSMTreeMap  className= "h-full w-full"
         trees={trees}
         onTreeClick={handleTreeClick}
-        onCameraClick={handleCameraClick}
+        //onCameraClick={handleCameraClick}
         isSatelliteView={isSatelliteView}
         onSatelliteToggle={handleSatelliteToggle}
       />

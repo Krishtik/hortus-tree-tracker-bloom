@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { SunIcon, MoonIcon, ComputerDesktopIcon} from '@heroicons/react/24/outline'
+import { SunIcon, MoonIcon, ComputerDesktopIcon, SparklesIcon} from '@heroicons/react/24/outline'
 import { Button } from '@/components/ui/button';
 import { Bell, Plus, LogOut } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -33,22 +33,24 @@ const EnhancedNavigation = ({
   const { logout, user } = useAuth();
 
   return (
-    <nav className="bg-white/80 dark:bg-gray-950/80 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-800/50 shadow-sm transition-all duration-300 sticky top-0 z-40">
+  // <nav className="bg-gradient-to-r from-emerald-100 via-green-50 to-lime-100 dark:from-emerald-900 dark:via-green-950 dark:to-lime-900 backdrop-blur-xl border-b border-green-200/50 dark:border-green-800/50 shadow-sm transition-all duration-300 sticky top-0 z-40">
+  <nav className="bg-forest dark:bg-[#1e1e1b] border-b border-forest dark:border-gray-700/50 shadow-sm transition-all duration-300 sticky top-0 z-40" style={{ backgroundImage: 'url(/leaf-pattern.svg)', backgroundSize: 'cover' }}>
+  {/* <nav className="bg-gradient-to-r from-darkgreen-100 via-green-50 to-amber-100 dark:from-pink-900 dark:via-rose-950 dark:to-amber-900 backdrop-blur-xl border-b border-rose-200/50 dark:border-rose-800/50 shadow-sm transition-all duration-300 sticky top-0 z-40"> */}
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          {/* Logo and Branding with enhanced styling */}
+
           <div className="flex items-center space-x-4">
             <div className="relative">
               <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 via-green-500 to-teal-500 rounded-xl flex items-center justify-center shadow-lg transform hover:scale-105 transition-transform duration-200">
-                <span className="text-white font-bold text-lg">🌳</span>
+                <span><SparklesIcon className="h-4 w-4 text-white" /></span>
               </div>
-              <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full animate-pulse"></div>
             </div>
             <div>
-              <h1 className="text-xl font-bold bg-gradient-to-r from-emerald-700 via-green-600 to-teal-600 dark:from-emerald-400 dark:via-green-400 dark:to-teal-400 bg-clip-text text-transparent">
+              <h1 className="text-xl font-bold bg-[#DBA514] dark:from-emerald-400 dark:via-green-400 dark:to-teal-400 bg-clip-text text-transparent">
                 Krish Hortus
               </h1>
-              <p className="text-xs text-gray-500 dark:text-gray-400 font-medium hidden sm:block">
+              <p className="text-xs text-white dark:text-gray-400 font-small hidden sm:block">
                 AI Tree Mapping Platform
               </p>
             </div>
@@ -72,10 +74,10 @@ const EnhancedNavigation = ({
             {/* User Info with better typography */}
             {user && (
               <div className="hidden lg:flex flex-col text-right">
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                <span className="text-sm font-medium text-[#FFFFFF] dark:text-[#A9A9A9]">
                   {user.name || user.email?.split('@')[0]}
                 </span>
-                <span className="text-xs text-gray-500 dark:text-gray-400">
+                <span className="text-xs text-sunshine dark:text-gray-400">
                   Tree Mapper
                 </span>
               </div>
@@ -87,10 +89,10 @@ const EnhancedNavigation = ({
                 <Button 
                   variant="outline" 
                   size="sm"
-                  className="border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 w-10 h-10 p-0 rounded-xl shadow-sm"
+                  className="border-gray-100 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 w-10 h-10 p-0 rounded-xl shadow-sm"
                 >
-                  <span className="text-lg">
-                    {theme === 'dark' ? '🌙' : '☀️'}
+                  <span className="flex items-center justify-center">
+                    {theme === 'dark' ? <MoonIcon className="h-4 w-4"/> : <SunIcon className="h-4 w-4"/>}
                   </span>
                 </Button>
               </DropdownMenuTrigger>

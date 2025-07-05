@@ -23,15 +23,15 @@ const AuthenticatedLayout = ({ children }: AuthenticatedLayoutProps) => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
+    <div className="flex flex-col min-h-screen bg-[#2F4939] dark:bg-[#1e1e1b] text-gray-900 dark:text-gray-100">
       {/* Top Navigation */}
       <div className={`${isMapPage ? 'hidden md:block' : 'block'} flex-shrink-0 relative z-40`}>
         <EnhancedNavigation onNotificationClick={handleNotificationClick} />
       </div>
 
       {/* Main Content */}
-      <main className={`flex-1 relative ${isMapPage ? 'h-screen md:h-full' : ''}`}>
-        <div className={`w-full ${isMapPage ? 'h-full pb-20 md:pb-0' : 'min-h-full'}`}>
+      <main className={`flex-1 relative ${isMapPage ? 'h-full md:h-full' : ''}`}>
+        <div className={`w-[350px] ${isMapPage ? 'h-full pb-20 md:pb-0' : 'min-h-full'}`} >
           {children}
         </div>
       </main>

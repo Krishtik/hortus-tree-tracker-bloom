@@ -18,12 +18,21 @@ export default {
 			}
 		},
 		extend: {
+			
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
 				ring: 'hsl(var(--ring))',
 				background: 'hsl(var(--background))',
 				foreground: 'hsl(var(--foreground))',
+				forest: '#4A6A5A',
+				meadow: '#5A9A78',
+				mint: '#8FC1A9',
+				sand: '#878672',
+				sunshine: '#F4D03F',
+				lightgrey: '#99a4a8',
+				lightsoil: '#D3D3D3',
+				shadow: '#1E1E1B',
 				primary: {
 					DEFAULT: 'hsl(var(--primary))',
 					foreground: 'hsl(var(--primary-foreground))'
