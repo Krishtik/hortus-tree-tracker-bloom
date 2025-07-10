@@ -17,30 +17,24 @@ import { dragIcon } from './TreeMapIcons';
 import LocationPopup from './LocationPopup';
 import { Button } from '@/components/ui/button';
 import { MapPin } from 'lucide-react';
-// import ProfileView from '../profile/ProfileView'; // REMOVE THIS IMPORT, it's now a separate route
-import { useNavigate } from 'react-router-dom'; // IMPORT useNavigate
+import { useNavigate } from 'react-router-dom';
 
-// Define the Nominatim API URL for reverse geocoding
 const NOMINATIM_API_URL = 'https://nominatim.openstreetmap.org/reverse?format=json&lat={lat}&lon={lon}';
 const IPAPI_API_URL = 'https://ipapi.co/json/';
+const DEFAULT_CENTER: [number, number] = [19.0760, 72.8774]; // Mumbai, India
 
 const getAddressFromCoordinates = async (lat: number, lng: number): Promise<string> => {
     try {
         const response = await fetch(NOMINATIM_API_URL.replace('{lat}', lat.toString()).replace('{lon}', lng.toString()));
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.json();
         return data.display_name || `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
     } catch (error) {
         console.error('Error fetching address from Nominatim:', error);
-        return `${lat.toFixed(6)}, ${lng.toFixed(6)}`; // Fallback to coordinates
+        return `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
     }
 };
 
-const DEFAULT_CENTER: [number, number] = [19.0760, 72.8774]; // Mumbai, India
-
-// MapClickListener component: Handles map clicks
 const MapClickListener = ({ onClick }: { onClick: (lat: number, lng: number) => void }) => {
     useMapEvents({
         click(e) {
@@ -54,23 +48,67 @@ const OSMTreeMap = ({
     trees,
     onTreeClick,
     onCameraClick,
-    isSatelliteView = false,
+    isSatelliteView: isSatelliteViewProp = false,
     onSatelliteToggle,
 }: OSMTreeMapProps) => {
-    const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+    // Restore map state from localStorage
+    const [isSatelliteView, setIsSatelliteView] = useState<boolean>(() => {
+        const stored = localStorage.getItem('treeMapSatelliteView');
+        return stored ? JSON.parse(stored) : isSatelliteViewProp;
+    });
+    const [initialCenter, setInitialCenter] = useState<[number, number]>(() => {
+        const stored = localStorage.getItem('treeMapCenter');
+        return stored ? JSON.parse(stored) : DEFAULT_CENTER;
+    });
+    const [initialZoom, setInitialZoom] = useState<number>(() => {
+        const stored = localStorage.getItem('treeMapZoom');
+        return stored ? Number(stored) : 15;
+    });
+
+    const [userLocation, setUserLocation] = useState<[number, number] | null>(() => {
+        const stored = localStorage.getItem('userLocation');
+        return stored ? JSON.parse(stored) : null;
+    });
     const [showSettings, setShowSettings] = useState(false);
     const [clickedLocation, setClickedLocation] = useState<{ lat: number; lng: number } | null>(null);
     const [isLoadingLocation, setIsLoadingLocation] = useState(false);
     const [address, setAddress] = useState<string>('Click "Locate Me" or map to detect location');
     const [draggedTreeId, setDraggedTreeId] = useState<string | null>(null);
-    const [mapInstance, setMapInstance] = useState<any>(null); // Leaflet Map instance
+    const [mapInstance, setMapInstance] = useState<any>(null);
     const { updateTree, addTree } = useTree();
     const [showLocationPopup, setShowLocationPopup] = useState(false);
     const [showTreeForm, setShowTreeForm] = useState(false);
+    const navigate = useNavigate();
 
-    const navigate = useNavigate(); // Initialize useNavigate hook
+    // Save userLocation to localStorage whenever it changes
+    useEffect(() => {
+        if (userLocation) {
+            localStorage.setItem('userLocation', JSON.stringify(userLocation));
+        }
+    }, [userLocation]);
+    // Save satellite view toggle
+    useEffect(() => {
+        localStorage.setItem('treeMapSatelliteView', JSON.stringify(isSatelliteView));
+    }, [isSatelliteView]);
 
-    // Memoize address fetching for efficiency and to avoid unnecessary re-renders
+    // Save center and zoom when map moves
+    useEffect(() => {
+        if (!mapInstance) return;
+        const saveMapState = () => {
+            const center = mapInstance.getCenter();
+            const zoom = mapInstance.getZoom();
+            localStorage.setItem('treeMapCenter', JSON.stringify([center.lat, center.lng]));
+            localStorage.setItem('treeMapZoom', JSON.stringify(zoom));
+        };
+        mapInstance.on('moveend', saveMapState);
+        mapInstance.on('zoomend', saveMapState);
+        return () => {
+            mapInstance.off('moveend', saveMapState);
+            mapInstance.off('zoomend', saveMapState);
+        };
+    }, [mapInstance]);
+
+    // Memoize address fetching
     const updateAddress = useCallback(async (lat: number, lng: number) => {
         try {
             const displayName = await getAddressFromCoordinates(lat, lng);
@@ -103,10 +141,8 @@ const OSMTreeMap = ({
     }, []);
 
     const handleCompleteView = useCallback(() => {
-        // Use navigate to go to the new /profile route
         navigate('/profile');
-    }, [navigate]); // Add navigate to dependencies
-
+    }, [navigate]);
 
     // Effect for navigating to location (external event listener)
     useEffect(() => {
@@ -116,7 +152,6 @@ const OSMTreeMap = ({
                 mapInstance.setView([lat, lng], zoom);
             }
         };
-
         window.addEventListener('navigateToLocation', handleNavigation as EventListener);
         return () => {
             window.removeEventListener('navigateToLocation', handleNavigation as EventListener);
@@ -157,9 +192,7 @@ const OSMTreeMap = ({
     const getDefaultLocationBasedOnIP = useCallback(async () => {
         try {
             const response = await fetch(IPAPI_API_URL);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             const data = await response.json();
             const { latitude, longitude } = data;
             const newLocation: [number, number] = [latitude, longitude];
@@ -188,7 +221,6 @@ const OSMTreeMap = ({
         try {
             const newH3Index = latLngToCell(newLat, newLng, 15);
             const displayName = await getAddressFromCoordinates(newLat, newLng);
-
             const locationUpdate = {
                 location: {
                     lat: newLat,
@@ -197,7 +229,6 @@ const OSMTreeMap = ({
                     address: displayName,
                 },
             };
-
             await updateTree(tree.id, locationUpdate);
         } catch (error) {
             console.error('Error updating tree location:', error);
@@ -219,167 +250,198 @@ const OSMTreeMap = ({
         }
     };
 
+    useEffect(() => {
+        document.body.style.overflow = showSettings ? 'hidden' : 'auto';
+    }, [showSettings]);
+
+    // Satellite toggle handler (syncs with local state and parent if needed)
+    const handleSatelliteToggle = useCallback(() => {
+        setIsSatelliteView((prev) => {
+            const next = !prev;
+            if (onSatelliteToggle) onSatelliteToggle(next);
+            return next;
+        });
+    }, [onSatelliteToggle]);
+
+    // Sidebar content (to avoid duplication)
+    const sidebarContent = (
+        <>
+            <h2 className="text-xl font-bold text-[#99a4a8] dark:text-gray-200 mb-2">Area Details</h2>
+            {/* Address */}
+            <div className="flex items-start space-x-2 p-4">
+                <MapPin className="h-12 w-12 text-lightgrey" />
+                <p className="text-md text-[#b09f02] dark:text-gray-300 leading-snug">{address}</p>
+            </div>
+            {/* Coordinates */}
+            {userLocation && (
+                <div className="text-sm text-lightgrey dark:text-gray-400 space-y-1 p-4">
+                    <p>Latitude: <span className="font-medium">{userLocation[0].toFixed(5)}</span></p>
+                    <p>Longitude: <span className="font-medium">{userLocation[1].toFixed(5)}</span></p>
+                </div>
+            )}
+            {/* Button */}
+            <div className="mt-auto pt-4">
+                <Button
+                    className="w-full bg-meadow hover:bg-green-700 text-white rounded-xl shadow-md"
+                    onClick={handleCompleteView}
+                >
+                    View Full Report
+                </Button>
+            </div>
+        </>
+    );
+
     return (
-        <div className="flex flex-col md:flex-row h-full w-full overflow-hidden">
-            {/* Conditional rendering for ProfileView is REMOVED here */}
-            {/* Instead, the router handles rendering ProfileView on a different path */}
-
-            <>
-                {/* Left Sidebar */}
-                {/* <div className="relative custom-corner-shadow w-[280px] h-[634px] bg-soil dark:bg-[#1e1e1b] z-40 p-4 inset-y-0 "> */}
-                  <div className= "relative inset-4 bottom-0 w- w-[280px] h-[634px] bg-forest rounded-tl-3xl z-40 p-8 overflow-y-auto flex flex-col space-6">
-                    {/* Header */}
-                    <h2 className="text-xl font-bold text-[#99a4a8] dark:text-gray-200">Area Details</h2>
-
-                    {/* Address */}
-                    <div className="flex items-start space-x-2 p-4">
-                        <MapPin className="h-12 w-12 text-lightgrey" />
-                        <p className="text-md text-[#b09f02] dark:text-gray-300 leading-snug">{address}</p>
-                    </div>
-
-                    {/* Coordinates */}
-                    {userLocation && (
-                        <div className="text-sm text-lightgrey dark:text-gray-400 space-y-1 p-4">
-                            <p>Latitude: <span className="font-medium">{userLocation[0].toFixed(5)}</span></p>
-                            <p>Longitude: <span className="font-medium">{userLocation[1].toFixed(5)}</span></p>
-                        </div>
-                    )}
-
-                    {/* Optional Action Button */}
-                    <div className="mt-auto pt-4">
-                        <Button
-                            className="w-full bg-meadow hover:bg-green-700 text-white rounded-xl shadow-md"
-                            onClick={handleCompleteView} // This will now navigate
-                        >
-                            View Full Report
-                        </Button>
-                    </div>
-                </div>
-                {/* </div> */}
-
-                {/* Map Container */}
-                <div className="absolute inset-y-4 right-4 bottom-0 w-[calc(100%-300px)] h-screen rounded-tr-3xl overflow-hidden shadow-200px">
-                    <MapContainer
-                        center={userLocation || DEFAULT_CENTER}
-                        zoom={15}
-                        scrollWheelZoom={true}
-                        style={{ height: '100%', width: '100%' }}
-                        className="z-0"
-                        whenCreated={setMapInstance}
+        <div className="flex h-screen w-screen overflow-hidden">
+                        {/* Mobile Hamburger Button */}
+            {!showSettings && (
+                <div className="absolute top-4 left-4 z-50 md:hidden">
+                    <Button
+                        className="bg-forest text-white p-2 rounded-lg shadow-md"
+                        onClick={() => setShowSettings(true)}
                     >
-                        <TileLayer
-                            url={
-                                isSatelliteView
-                                    ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
-                                    : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
-                            }
-                            attribution={isSatelliteView ? '© Esri' : '© OpenStreetMap contributors'}
-                        />
+                        ☰
+                    </Button>
+                </div>
+            )}
 
-                        <MapUpdater center={userLocation || DEFAULT_CENTER} mapInstance={mapInstance} />
-                        <MapClickListener onClick={handleMapClick} />
-
-                        {userLocation && <UserLocationMarker position={userLocation} address={address} />}
-
-                        {trees.map((tree) => (
-                            <TreeMarker
-                                key={`tree-${tree.id}`}
-                                tree={tree}
-                                onTreeClick={onTreeClick}
-                                onDragEnd={handleMarkerDragEnd}
-                                isDragging={draggedTreeId === tree.id}
-                                onDragStart={() => setDraggedTreeId(tree.id)}
-                            />
-                        ))}
-
-                        {clickedLocation && !showTreeForm && (
-                            <Marker
-                                position={[clickedLocation.lat, clickedLocation.lng]}
-                                draggable={true}
-                                icon={dragIcon}
-                                eventHandlers={{
-                                    dragend: (e) => {
-                                        const pos = e.target.getLatLng();
-                                        setClickedLocation({ lat: pos.lat, lng: pos.lng });
-                                        setShowLocationPopup(true);
-                                    },
-                                }}
-                            >
-                                <Popup>
-                                    <div className="space-y-2 text-sm bg-white rounded-lg shadow-lg p-2">
-                                        <p>🎯 Drag to adjust tree location</p>
-                                        <Button
-                                            size="sm"
-                                            className="w-full bg-green-600 text-white hover:bg-green-700"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setShowLocationPopup(true);
-                                            }}
-                                        >
-                                            Show Location Details
-                                        </Button>
-                                    </div>
-                                </Popup>
-                            </Marker>
-                        )}
-                    </MapContainer>
-
-                    {clickedLocation && showLocationPopup && !showTreeForm && (
-                        <LocationPopup
-                            location={clickedLocation}
-                            onClose={handleCloseLocationPopup}
-                            onTagTree={handleTagTree}
-                        />
-                    )}
-
-                    {clickedLocation && showTreeForm && (
-                        <Dialog open={showTreeForm} onOpenChange={setShowTreeForm}>
-                            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto z-[9999]">
-                                <TreeForm
-                                    onSubmit={handleTreeFormSubmit}
-                                    onClose={() => {
-                                        setShowTreeForm(false);
-                                        setClickedLocation(null);
-                                    }}
-                                    initialLocation={clickedLocation}
-                                />
-                            </DialogContent>
-                        </Dialog>
-                    )}
-
-                    {/* Top-right controls: Satellite toggle and settings */}
-                    <div className="absolute top-4 right-4 z-50 flex flex-col space-y-3 items-end pointer-events-none">
-                        <div className="pointer-events-auto">
-                            <SatelliteToggle isSatelliteView={isSatelliteView} onToggle={onSatelliteToggle || (() => {})} />
-                        </div>
-                        {/* <div className="pointer-events-auto">
+            {/* Sidebar for mobile (slide-in, toggled) */}
+            {showSettings && (
+                <>
+                    <div
+                        className="fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden"
+                        onClick={() => setShowSettings(false)}
+                    />
+                    <aside className="fixed w-72 h-full bg-forest p-6 space-y-6 z-40 transition-transform duration-300 ease-in-out md:hidden flex flex-col">
+                        <div className="flex justify-between items-center mb-4 md:hidden">
+                            <h2 className="text-lg font-bold text-white">Area Details</h2>
                             <Button
-                                size="icon"
-                                className="rounded-full shadow-md bg-white text-gray-700 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-                                onClick={() => setShowSettings(true)}
+                                variant="ghost"
+                                onClick={() => setShowSettings(false)}
+                                className="text-white text-2xl"
                             >
-                                ⚙️
+                                ×
                             </Button>
-                        </div> */}
-                    </div>
+                        </div>
+                        {sidebarContent}
+                    </aside>
+                </>
+            )}
 
-                    {/* MapSettings Dialog (rendered conditionally) */}
-                    {/* <MapSettings
-                        isOpen={showSettings}
-                        onClose={() => setShowSettings(false)}
-                        trees={trees}
-                        address={address}
-                    /> */}
+            {/* Sidebar for desktop (always visible) */}
+            {/* <aside className="hidden md:flex flex-col w-72 h-full bg-forest p-6 space-y-6 z-30">
+                {sidebarContent}
+            </aside> */}
+            {/* Map Container */}
+            <div className="flex-1 relative z-20">
+                <MapContainer
+                    center={userLocation || initialCenter}
+                    zoom={initialZoom}
+                    scrollWheelZoom={true}
+                    style={{ height: '100%', width: '100%' }}
+                    className="z-0"
+                    whenCreated={setMapInstance}
+                >
+                    <TileLayer
+                        url={
+                            isSatelliteView
+                                ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+                                : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+                        }
+                        attribution={isSatelliteView ? '© Esri' : '© OpenStreetMap contributors'}
+                    />
 
-                    {/* Bottom-right: User location button */}
-                    <div className="absolute bottom-6 right-4 z-50 pointer-events-auto">
-                        <MapControls
-                            onLocateClick={handleLocateUser}
-                            isLocating={isLoadingLocation}
+                    <MapUpdater center={userLocation || initialCenter} mapInstance={mapInstance} />
+                    <MapClickListener onClick={handleMapClick} />
+
+                    {userLocation && <UserLocationMarker position={userLocation} address={address} />}
+
+                    {trees.map((tree) => (
+                        <TreeMarker
+                            key={`tree-${tree.id}`}
+                            tree={tree}
+                            onTreeClick={onTreeClick}
+                            onDragEnd={handleMarkerDragEnd}
+                            isDragging={draggedTreeId === tree.id}
+                            onDragStart={() => setDraggedTreeId(tree.id)}
+                        />
+                    ))}
+
+                    {clickedLocation && !showTreeForm && (
+                        <Marker
+                            position={[clickedLocation.lat, clickedLocation.lng]}
+                            draggable={true}
+                            icon={dragIcon}
+                            eventHandlers={{
+                                dragend: (e) => {
+                                    const pos = e.target.getLatLng();
+                                    setClickedLocation({ lat: pos.lat, lng: pos.lng });
+                                    setShowLocationPopup(true);
+                                },
+                            }}
+                        >
+                            <Popup>
+                                <div className="space-y-2 text-sm bg-white rounded-lg shadow-lg p-2">
+                                    <p>🎯 Drag to adjust tree location</p>
+                                    <Button
+                                        size="sm"
+                                        className="w-full bg-green-600 text-white hover:bg-green-700"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setShowLocationPopup(true);
+                                        }}
+                                    >
+                                        Show Location Details
+                                    </Button>
+                                </div>
+                            </Popup>
+                        </Marker>
+                    )}
+                </MapContainer>
+
+                {/* Location Popup (outside MapContainer for stacking) */}
+                {clickedLocation && showLocationPopup && !showTreeForm && (
+                    <LocationPopup
+                        location={clickedLocation}
+                        onClose={handleCloseLocationPopup}
+                        onTagTree={handleTagTree}
+                    />
+                )}
+
+                {/* Tree Form */}
+                {clickedLocation && showTreeForm && (
+                    <Dialog open={showTreeForm} onOpenChange={setShowTreeForm}>
+                        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto z-[9999]">
+                            <TreeForm
+                                onSubmit={handleTreeFormSubmit}
+                                onClose={() => {
+                                    setShowTreeForm(false);
+                                    setClickedLocation(null);
+                                }}
+                                initialLocation={clickedLocation}
+                            />
+                        </DialogContent>
+                    </Dialog>
+                )}
+
+                {/* Top Right Controls */}
+                <div className="absolute top-4 right-4 z-50 flex flex-col space-y-3 items-end pointer-events-none">
+                    <div className="pointer-events-auto">
+                        <SatelliteToggle
+                            isSatelliteView={isSatelliteView}
+                            onToggle={handleSatelliteToggle}
                         />
                     </div>
                 </div>
-            </>
+
+                {/* Bottom Right Location Button */}
+                <div className="absolute bottom-6 right-4 z-50 pointer-events-auto">
+                    <MapControls
+                        onLocateClick={handleLocateUser}
+                        isLocating={isLoadingLocation}
+                    />
+                </div>
+            </div>
         </div>
     );
 };

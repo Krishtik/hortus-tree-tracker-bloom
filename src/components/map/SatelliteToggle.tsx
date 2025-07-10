@@ -7,6 +7,7 @@ interface SatelliteToggleProps {
   onToggle: () => void;
 }
 
+
 const SatelliteToggle = ({ isSatelliteView, onToggle }: SatelliteToggleProps) => {
   return (
     <Button

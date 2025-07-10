@@ -1,3 +1,25 @@
+// import React from 'react';
+// import logo from '@/assets/logo.png'; // Replace with your logo path
+// import { useAuth } from '@/contexts/AuthContext'; // Adjust import as needed
+
+// const HomeTopBar = () => {
+//   const { user } = useAuth(); // Or however you get user info
+
+//   return (
+//     <div className="flex flex-row items-center h-20 bg-[#C2A600] px-8 rounded-tl-[40px]">
+//       <div className="w-14 h-14 rounded-full bg-[#188B6A] flex items-center justify-center mr-6">
+//         <img src={logo} alt="Company" className="w-8 h-8" />
+//       </div>
+//       <div className="flex-1" />
+//       {/* <div className="w-12 h-12 rounded-full border-4 border-white overflow-hidden">
+//         <img src={user?.profilePicture || '/default-profile.png'} alt="Profile" className="w-full h-full object-cover" />
+//       </div> */}
+//     </div>
+//   );
+// };
+
+// export default HomeTopBar;
+
 
 import { useState } from 'react';
 import { SunIcon, MoonIcon, ComputerDesktopIcon, SparklesIcon} from '@heroicons/react/24/outline'
@@ -13,8 +35,9 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
+import '@/components/HomeScreenCSS/HomeScreen.css'; // Assuming you have a CSS file for styles
 
-interface EnhancedNavigationProps {
+interface HomeTopBarProps {
   onNotificationClick: () => void;
   activeTab?: 'home' | 'scan' | 'log' | 'profile';
   onTabChange?: (tab: 'home' | 'scan' | 'log' | 'profile') => void;
@@ -22,27 +45,27 @@ interface EnhancedNavigationProps {
   onLogPlantClick?: () => void;
 }
 
-const EnhancedNavigation = ({ 
-  onNotificationClick, 
-  activeTab = 'home',
-  onTabChange,
-  unreadNotifications = 0,
+const HomeTopBar = ({ 
+  // onNotificationClick, 
+  // activeTab = 'home',
+  // onTabChange,
+  // unreadNotifications = 0,
   onLogPlantClick
-}: EnhancedNavigationProps) => {
+}: HomeTopBarProps) => {
   const { theme, setTheme } = useTheme();
   const { logout, user } = useAuth();
 
   return (
   // <nav className="bg-gradient-to-r from-emerald-100 via-green-50 to-lime-100 dark:from-emerald-900 dark:via-green-950 dark:to-lime-900 backdrop-blur-xl border-b border-green-200/50 dark:border-green-800/50 shadow-sm transition-all duration-300 sticky top-0 z-40">
-  <nav className="bg-forest dark:bg-[#1e1e1b] border-b border-forest dark:border-gray-700/50 shadow-sm transition-all duration-300 sticky top-0 z-40">
+  <nav className="navbar">
   {/* <nav className="bg-gradient-to-r from-darkgreen-100 via-green-50 to-amber-100 dark:from-pink-900 dark:via-rose-950 dark:to-amber-900 backdrop-blur-xl border-b border-rose-200/50 dark:border-rose-800/50 shadow-sm transition-all duration-300 sticky top-0 z-40"> */}
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"> 
         <div className="flex justify-between items-center h-16">
 
           <div className="flex items-center space-x-4">
             <div className="relative">
-              <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 via-green-500 to-teal-500 rounded-xl flex items-center justify-center shadow-lg transform hover:scale-105 transition-transform duration-200">
+              <div className="nav-icon">
                 <span><SparklesIcon className="h-4 w-4 text-white" /></span>
               </div>
             </div>
@@ -122,7 +145,7 @@ const EnhancedNavigation = ({
             </DropdownMenu>
 
             {/* Notifications with enhanced design */}
-            <Button
+            {/* <Button
               variant="outline"
               size="sm"
               onClick={onNotificationClick}
@@ -137,7 +160,7 @@ const EnhancedNavigation = ({
                   {unreadNotifications}
                 </Badge>
               )}
-            </Button>
+            </Button> */}
 
             {/* Logout Button with enhanced styling */}
             <Button
@@ -156,4 +179,4 @@ const EnhancedNavigation = ({
   );
 };
 
-export default EnhancedNavigation;
+export default HomeTopBar;

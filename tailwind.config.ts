@@ -102,4 +102,18 @@ export default {
 		}
 	},
 	plugins: [require("tailwindcss-animate")],
+
+
 } satisfies Config;
+export const buttonStyles = {
+  roundBackButton:
+	`inline-flex items-center justify-center
+	 w-10 h-10 rounded-full
+	 bg-white text-emerald-600
+	 dark:bg-gray-800 dark:text-emerald-300
+	 hover:bg-emerald-100 dark:hover:bg-gray-700
+	 border border-emerald-300 dark:border-emerald-700
+	 shadow-md
+	 transition-colors duration-200
+	 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2`,
+};

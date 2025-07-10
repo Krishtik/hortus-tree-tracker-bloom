@@ -3,6 +3,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTree } from '@/contexts/TreeContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { useNavigate } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TreePine, MapPin, Calendar, Award, Target, TrendingUp, Users, Leaf } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -10,6 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 const ProfileView = () => {
   const { user } = useAuth();
   const { trees } = useTree();
+  const navigate = useNavigate();
 
   // Calculate stats
   const totalTrees = trees.length;
@@ -37,8 +40,27 @@ const ProfileView = () => {
 
   return (
     <div className="h-screen w-full bg-gradient-to-br from-green-50 via-emerald-50 to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 overflow-y-auto">
+      
       <div className="max-w-4xl mx-auto space-y-6 p-4 pb-24">
-        
+        <button
+          onClick={() => navigate(-1)}
+          className="
+            fixed top-6 left-6 z-30
+            inline-flex items-center justify-center
+            w-10 h-10 rounded-full
+            bg-white text-emerald-600
+            dark:bg-gray-800 dark:text-emerald-300
+            hover:bg-emerald-100 dark:hover:bg-gray-700
+            border border-emerald-300 dark:border-emerald-700
+            shadow-md
+            transition-colors duration-200
+            focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2
+          "
+        >
+          <ArrowLeft className="h-5 w-5" />
+          <span className="sr-only">Back</span>
+        </button>
+
         {/* Profile Header */}
         <Card className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-0 shadow-xl">
           <CardContent className="pt-6">
