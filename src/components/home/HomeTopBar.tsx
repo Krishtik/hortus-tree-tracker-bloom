@@ -36,6 +36,7 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import '@/components/HomeScreenCSS/HomeScreen.css'; // Assuming you have a CSS file for styles
+import { TreeDeciduous } from 'lucide-react';
 
 interface HomeTopBarProps {
   onNotificationClick: () => void;
@@ -60,20 +61,20 @@ const HomeTopBar = ({
   <nav className="navbar">
   {/* <nav className="bg-gradient-to-r from-darkgreen-100 via-green-50 to-amber-100 dark:from-pink-900 dark:via-rose-950 dark:to-amber-900 backdrop-blur-xl border-b border-rose-200/50 dark:border-rose-800/50 shadow-sm transition-all duration-300 sticky top-0 z-40"> */}
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"> 
-        <div className="flex justify-between items-center h-16">
+      <div className="max-w-7.6xl mx-auto px-4 sm:px-6 lg:px-8"> 
+        <div className="flex justify-between items-center h-14">
 
           <div className="flex items-center space-x-4">
             <div className="relative">
               <div className="nav-icon">
-                <span><SparklesIcon className="h-4 w-4 text-white" /></span>
+                <span><TreeDeciduous className="h-4 w-4 text-sunshine" /></span>
               </div>
             </div>
             <div>
-              <h1 className="text-xl font-bold bg-[#DBA514] dark:from-emerald-400 dark:via-green-400 dark:to-teal-400 bg-clip-text text-transparent">
+              <h1 className="text-sm font-bold bg-[#88976d] dark:from-emerald-400 dark:via-green-400 dark:to-teal-400 bg-clip-text text-transparent">
                 Krish Hortus
               </h1>
-              <p className="text-xs text-white dark:text-gray-400 font-small hidden sm:block">
+              <p className="text-[10px] text-sunshine dark:text-gray-800 font-small hidden sm:block">
                 AI Tree Mapping Platform
               </p>
             </div>
@@ -97,10 +98,10 @@ const HomeTopBar = ({
             {/* User Info with better typography */}
             {user && (
               <div className="hidden lg:flex flex-col text-right">
-                <span className="text-sm font-medium text-[#FFFFFF] dark:text-[#A9A9A9]">
+                <span className="text-[14px] font-medium text-[#88976d] dark:text-[#A9A9A9]">
                   {user.name || user.email?.split('@')[0]}
                 </span>
-                <span className="text-xs text-sunshine dark:text-gray-400">
+                <span className="text-[10px] text-sunshine dark:text-gray-400">
                   Tree Mapper
                 </span>
               </div>
@@ -112,7 +113,7 @@ const HomeTopBar = ({
                 <Button 
                   variant="outline" 
                   size="sm"
-                  className="border-gray-100 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 w-10 h-10 p-0 rounded-xl shadow-sm"
+                  className="text-forest dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 w-10 h-10 p-0 rounded-full shadow-sm"
                 >
                   <span className="flex items-center justify-center">
                     {theme === 'dark' ? <MoonIcon className="h-4 w-4"/> : <SunIcon className="h-4 w-4"/>}
