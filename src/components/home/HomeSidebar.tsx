@@ -9,13 +9,13 @@ const HomeSidebar = () => {
 
   return (
     <aside className="home-side-bar">
-      <div className="p-4">
+      <div className="p-6">
         <h2 className="text-lg font-bold mb-4">Area Details</h2>
-        <div className="flex items-center space-x-3 mb-2 bg-[#8eb69b]/20 p-6 rounded-1xl">
+        <div className="w-full flex items-center space-x-3 mb-4 bg-[#8eb69b]/20 p-6 rounded-1xl">
           <MapPin className="w-7 h-7 text-[#C2A600]" />
           <span className="font-semibold">{locationInfo.address}</span>
         </div>
-        <div className="text-sm text-gray bg-[#8eb69b]/20 p-6 ">
+        <div className="w-full text-sm text-gray bg-[#8eb69b]/20 p-6 ">
           Lat: {locationInfo.lat}<br />
           Lng: {locationInfo.lng}
         </div>
@@ -24,7 +24,7 @@ const HomeSidebar = () => {
         {/* <h3 className="font-semibold mb-2">Nearby Trees Tagged</h3> */}
         {/* <div className="text-3xl font-bold text-[#C2A600] bg-[#8eb69b]/60 p-6 ">{totalNearbyTrees}</div> */}
       </div>
-      <Button className="bg-[#C2A600] text-[#188B6A] font-bold mt-auto">View Full Report</Button>
+      <Button className="bg-[#8eb69b]/40 text-[#C2A600] font-bold rounded-full hover:bg-[#C2A600]/80 hover:text-[#000000] mt-auto">View Full Report</Button>
     </aside>
   );
 };

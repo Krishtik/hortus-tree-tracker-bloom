@@ -35,12 +35,15 @@
 .home-left-toolbar {
   @apply hidden lg:flex flex-col items-center py-6 px-2 bg-[#2c4c3b] dark:bg-[#1e1e1b] w-20 space-y-10;
 }
-
+.home-side-bar-button {
+  @apply bg-[#8eb69b]/40 text-[#C2A600] font-bold rounded-full hover:bg-[#C2A600]/40 hover:text-[#8eb69b] mt-auto;
+}
 .home-side-bar {
-  @apply hidden md:flex flex-col w-72 bg-[#3d6951] dark:bg-[#292929] rounded-tl-[10px] p-10 text-white space-y-8;
+  @apply hidden md:flex flex-col w-72 bg-[#3d6951] dark:bg-[#292929] rounded-tl-[10px] p-4 text-white space-y-8;
 }
 
 .home-left-tool-bar-button {
-  @apply bg-[#3d6951] w-8 h-8 flex items-center justify-center hover:scale-105 transition-colors duration-200
-    rounded-full text-white shadow-lg;
+  @apply bg-[#3d6951] dark:bg-[#292929] dark:text-gray-300 transition-colors duration-200 w-8 h-8 rounded-full flex items-center justify-center hover:scale-110 text-white shadow-lg
+  active:shadow-[0_0_10px_2px_rgba(195,195,195,0.6)];
 }
+
