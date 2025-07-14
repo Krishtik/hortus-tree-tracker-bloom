@@ -48,11 +48,11 @@ const LandingPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-700">
-      {/* Top navigation with logo and auth button */}
+      {/* Top navigation with logo and auth button
       <Navigation 
         onAuthClick={handleAuthClick}
         onLogPlantClick={() => console.log('Log plant clicked from landing')}
-      />
+      /> */}
       
       <main className="container mx-auto px-4 py-8 pb-20">
         {/* Hero Section with Modern Design */}

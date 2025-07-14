@@ -12,7 +12,6 @@ import { Badge } from '@/components/ui/badge';
 import { TreeFormData } from '@/types/tree';
 import { aiService, TreeIdentificationResult } from '@/services/aiService';
 import CameraCapture from '@/components/camera/CameraCapture';
-
 interface TreeFormProps {
   onSubmit: (data: TreeFormData, location: { lat: number; lng: number }) => void;
   onClose: () => void;
@@ -117,7 +116,8 @@ const TreeForm = ({ onSubmit, onClose, initialLocation, capturedPhoto }: TreeFor
 
   if (showCamera) {
     return (
-      <div className="fixed inset-0 z-50 bg-black">
+      // <div className="fixed inset-0 z-50 bg-black">
+      <div className="camera-capture">
         <CameraCapture
           onCapture={handlePhotoCapture}
           onClose={() => setShowCamera(false)}
@@ -127,8 +127,8 @@ const TreeForm = ({ onSubmit, onClose, initialLocation, capturedPhoto }: TreeFor
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="tree-form-container">
+      <div className="flex items-center justify-between mb-4 p-2">
         <h2 className="text-2xl font-bold text-green-800">Tag New Tree</h2>
         <Button variant="outline" onClick={onClose}>
           Cancel
